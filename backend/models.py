@@ -5,8 +5,10 @@ from database import Base
 class WingLocation(Base):
     __tablename__ = "wing_locations"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
+    name = Column(String, index=True)
     address = Column(String)
+    lat = Column(Float)
+    lon = Column(Float)
     reviews = relationship("WingReview", back_populates="location")
 
 class WingReview(Base):
