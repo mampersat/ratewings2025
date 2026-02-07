@@ -1,28 +1,63 @@
-import { useState } from 'react'
-import LocationList from './components/LocationList'
-import AddLocationForm from './components/AddLocationForm'
-import ReviewList from './components/ReviewList'
-import AddReviewForm from './components/AddReviewForm'
-import SearchPage from './components/SearchPage'
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import HomePage from './pages/HomePage'
+import LocationsPage from './pages/LocationsPage'
+import ReviewsPage from './pages/ReviewsPage'
+import ReviewDetailPage from './pages/ReviewDetailPage'
+import LocationDetailPage from './pages/LocationDetailPage'
 import './App.css'
 
 function App() {
-  // Used to trigger refresh after adding
-  const [refresh, setRefresh] = useState(0)
-
-  const handleRefresh = () => setRefresh((r) => r + 1)
-
   return (
-    <div>
-      <SearchPage />
-      <div style={{ maxWidth: 600, margin: 'auto', padding: 20 }}>
-        <h1>Chicken Wing Rating App</h1>
-        <AddLocationForm onAdd={handleRefresh} />
-        <LocationList refresh={refresh} />
-        <AddReviewForm onAdd={handleRefresh} refresh={refresh} />
-        <ReviewList refresh={refresh} />
+    <BrowserRouter>
+      <div>
+        <header style={{ textAlign: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
+          <h1 style={{ margin: 0, fontSize: '1.75rem' }}>Chicken Wing Rating App</h1>
+          <p style={{ margin: '0.25rem 0 0', color: '#666', fontSize: '0.95rem' }}>Find the best wings near you</p>
+          <nav style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
+            <NavLink
+              to="/"
+              end
+              style={({ isActive }) => ({
+                color: isActive ? '#c00' : '#666',
+                textDecoration: 'none',
+                fontWeight: isActive ? 600 : 400,
+              })}
+            >
+              Search
+            </NavLink>
+            <NavLink
+              to="/locations"
+              style={({ isActive }) => ({
+                color: isActive ? '#c00' : '#666',
+                textDecoration: 'none',
+                fontWeight: isActive ? 600 : 400,
+              })}
+            >
+              Locations
+            </NavLink>
+            <NavLink
+              to="/reviews"
+              style={({ isActive }) => ({
+                color: isActive ? '#c00' : '#666',
+                textDecoration: 'none',
+                fontWeight: isActive ? 600 : 400,
+              })}
+            >
+              Reviews
+            </NavLink>
+          </nav>
+        </header>
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/locations" element={<LocationsPage />} />
+            <Route path="/locations/:id" element={<LocationDetailPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/reviews/:id" element={<ReviewDetailPage />} />
+          </Routes>
+        </main>
       </div>
-    </div>
+    </BrowserRouter>
   )
 }
 

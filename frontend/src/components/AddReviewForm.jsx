@@ -50,10 +50,10 @@ export default function AddReviewForm({ onAdd, refresh }) {
       </select>
       <input
         type="number"
-        placeholder="Rating (1-5)"
+        placeholder="Rating (0-10)"
         value={rating}
-        min={1}
-        max={5}
+        min={0}
+        max={10}
         step={0.1}
         required
         onChange={(e) => setRating(e.target.value)}

@@ -13,6 +13,8 @@ class WingLocationCreate(WingLocationBase):
 class WingLocation(WingLocationBase):
     id: int
     distance: Optional[float] = None
+    average_rating: Optional[float] = None
+    review_count: Optional[int] = None
     class Config:
         orm_mode = True
 
@@ -27,4 +29,8 @@ class WingReview(WingReviewBase):
     id: int
     location_id: int
     class Config:
-        orm_mode = True 
+        orm_mode = True
+
+class WingReviewWithLocation(WingReview):
+    location_name: Optional[str] = None
+    location_address: Optional[str] = None 

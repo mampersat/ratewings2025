@@ -6,7 +6,7 @@ export default function SearchPage() {
   const [locations, setLocations] = useState([]);
   const [filters, setFilters] = useState({
     minRating: 0,
-    maxRating: 5,
+    maxRating: 10,
     priceRange: 'all', // 'budget', 'moderate', 'premium'
     sortBy: 'rating' // 'rating', 'name', 'reviews'
   });
@@ -77,7 +77,7 @@ export default function SearchPage() {
   return (
     <div className="search-page">
       <div className="search-header">
-        <h1>Find the Best Wings</h1>
+        <h2 className="search-title">Search by city or find near you</h2>
         <div className="search-bar">
           <input
             type="text"
@@ -108,9 +108,11 @@ export default function SearchPage() {
             onChange={(e) => handleFilterChange('minRating', e.target.value)}
           >
             <option value="0">Any Rating</option>
-            <option value="3">3+ Stars</option>
-            <option value="4">4+ Stars</option>
-            <option value="4.5">4.5+ Stars</option>
+            <option value="5">5+</option>
+            <option value="6">6+</option>
+            <option value="7">7+</option>
+            <option value="8">8+</option>
+            <option value="9">9+</option>
           </select>
         </div>
 
@@ -145,10 +147,23 @@ export default function SearchPage() {
           <div key={location.id} className="location-card">
             <h3>{location.name}</h3>
             <p>{location.address}</p>
+            <div className="location-rating-box">
+              {location.average_rating != null && location.review_count > 0 ? (
+                <>
+                  <span className="location-rating-value">
+                    {Number(location.average_rating).toFixed(1)}/10
+                  </span>
+                  <span className="location-rating-meta">
+                    {location.review_count} review{location.review_count !== 1 ? 's' : ''}
+                  </span>
+                </>
+              ) : (
+                <span className="location-rating-none">No ratings yet</span>
+              )}
+            </div>
             {location.distance !== undefined && location.distance !== null && (
               <p><strong>Distance:</strong> {location.distance.toFixed(2)} miles</p>
             )}
-            {/* Add more location details here */}
           </div>
         ))}
       </div>
