@@ -6,8 +6,6 @@ export default function SearchPage() {
   const [locations, setLocations] = useState([]);
   const [filters, setFilters] = useState({
     minRating: 0,
-    maxRating: 10,
-    priceRange: 'all', // 'budget', 'moderate', 'premium'
     sortBy: 'rating' // 'rating', 'name', 'reviews'
   });
   const [lat, setLat] = useState('');
@@ -21,18 +19,22 @@ export default function SearchPage() {
 
   const fetchLocations = async () => {
     try {
-      let url = 'http://localhost:8000/locations/';
-      const params = [];
+      const params = new URLSearchParams();
       if (mode === 'city' && searchTerm) {
-        params.push(`search=${encodeURIComponent(searchTerm)}`);
+        params.set('search', searchTerm);
       }
       if (mode === 'nearby' && lat && lon) {
-        params.push(`lat=${encodeURIComponent(lat)}`);
-        params.push(`lon=${encodeURIComponent(lon)}`);
+        params.set('lat', String(lat));
+        params.set('lon', String(lon));
       }
-      if (params.length > 0) {
-        url += `?${params.join('&')}`;
+      if (filters.minRating > 0) {
+        params.set('min_rating', String(filters.minRating));
       }
+      if (filters.sortBy) {
+        params.set('sort_by', filters.sortBy);
+      }
+      params.set('limit', '100');
+      const url = `http://localhost:8000/locations/?${params.toString()}`;
       const response = await fetch(url);
       const data = await response.json();
       setLocations(data);
@@ -71,17 +73,14 @@ export default function SearchPage() {
     }));
   };
 
-  // No client-side filtering by name or address; backend handles it
-  const filteredLocations = locations;
-
   return (
     <div className="search-page">
       <div className="search-header">
-        <h2 className="search-title">Search by city or find near you</h2>
+        <h2 className="search-title">Search by location name or find near you</h2>
         <div className="search-bar">
           <input
             type="text"
-            placeholder="Enter city or state..."
+            placeholder="Location name or address..."
             value={searchTerm}
             onChange={handleSearch}
             className="search-input"
@@ -95,55 +94,41 @@ export default function SearchPage() {
           {mode === 'nearby' && lat && lon ? (
             <>Searching near your location ({lat.toFixed(4)}, {lon.toFixed(4)})</>
           ) : (
-            <>Searching by city or state</>
+            <>Search by location name or address</>
           )}
         </div>
       </div>
 
       <div className="filters-section">
         <div className="filter-group">
-          <label>Rating:</label>
-          <select 
-            value={filters.minRating} 
-            onChange={(e) => handleFilterChange('minRating', e.target.value)}
+          <label>Minimum rating:</label>
+          <select
+            value={filters.minRating}
+            onChange={(e) => handleFilterChange('minRating', Number(e.target.value))}
           >
-            <option value="0">Any Rating</option>
-            <option value="5">5+</option>
-            <option value="6">6+</option>
-            <option value="7">7+</option>
-            <option value="8">8+</option>
-            <option value="9">9+</option>
+            <option value={0}>Any rating</option>
+            <option value={5}>5+</option>
+            <option value={6}>6+</option>
+            <option value={7}>7+</option>
+            <option value={8}>8+</option>
+            <option value={9}>9+</option>
           </select>
         </div>
-
         <div className="filter-group">
-          <label>Price Range:</label>
-          <select 
-            value={filters.priceRange} 
-            onChange={(e) => handleFilterChange('priceRange', e.target.value)}
-          >
-            <option value="all">All Prices</option>
-            <option value="budget">Budget</option>
-            <option value="moderate">Moderate</option>
-            <option value="premium">Premium</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>Sort By:</label>
-          <select 
-            value={filters.sortBy} 
+          <label>Sort by:</label>
+          <select
+            value={filters.sortBy}
             onChange={(e) => handleFilterChange('sortBy', e.target.value)}
           >
-            <option value="rating">Rating</option>
-            <option value="name">Name</option>
-            <option value="reviews">Most Reviews</option>
+            <option value="rating">Highest rating</option>
+            <option value="name">Name A–Z</option>
+            <option value="reviews">Most reviews</option>
           </select>
         </div>
       </div>
 
       <div className="results-section">
-        {filteredLocations.map(location => (
+        {locations.map(location => (
           <div key={location.id} className="location-card">
             <h3>{location.name}</h3>
             <p>{location.address}</p>

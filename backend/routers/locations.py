@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 import models, schemas
 from database import SessionLocal
 
@@ -45,17 +45,35 @@ def read_location(location_id: int, db: Session = Depends(get_db)):
 @router.get("/", response_model=list[schemas.WingLocation])
 def read_locations(
     skip: int = 0,
-    limit: int = 10,
-    search: str = Query(None, description="Search by address"),
+    limit: int = 100,
+    search: str = Query(None, description="Search by location name or address"),
     lat: float = Query(None, description="Latitude for distance search"),
     lon: float = Query(None, description="Longitude for distance search"),
+    min_rating: float = Query(None, description="Minimum average rating (0-10)"),
+    sort_by: str = Query(None, description="Sort: rating, name, reviews"),
     db: Session = Depends(get_db)
 ):
     query = db.query(models.WingLocation)
+
     if search:
-        query = query.filter(models.WingLocation.address.ilike(f"%{search}%"))
+        term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                models.WingLocation.name.ilike(term),
+                models.WingLocation.address.ilike(term),
+            )
+        )
+
+    if min_rating is not None and min_rating > 0:
+        subq = (
+            db.query(models.WingReview.location_id)
+            .group_by(models.WingReview.location_id)
+            .having(func.avg(models.WingReview.rating) >= min_rating)
+            .subquery()
+        )
+        query = query.filter(models.WingLocation.id.in_(subq))
+
     if lat is not None and lon is not None:
-        # Haversine formula for distance in miles
         distance_expr = 3958.8 * func.acos(
             func.cos(func.radians(lat)) *
             func.cos(func.radians(models.WingLocation.lat)) *
@@ -72,6 +90,34 @@ def read_locations(
             locations.append(loc)
         _attach_rating_stats(locations, db)
         return locations
+
+    if sort_by == "rating":
+        stats = (
+            db.query(
+                models.WingReview.location_id,
+                func.avg(models.WingReview.rating).label("avg_rating"),
+                func.count(models.WingReview.id).label("review_count"),
+            )
+            .group_by(models.WingReview.location_id)
+            .subquery()
+        )
+        query = query.outerjoin(stats, models.WingLocation.id == stats.c.location_id)
+        query = query.order_by(stats.c.avg_rating.desc().nullslast(), models.WingLocation.name)
+    elif sort_by == "reviews":
+        stats = (
+            db.query(
+                models.WingReview.location_id,
+                func.avg(models.WingReview.rating).label("avg_rating"),
+                func.count(models.WingReview.id).label("review_count"),
+            )
+            .group_by(models.WingReview.location_id)
+            .subquery()
+        )
+        query = query.outerjoin(stats, models.WingLocation.id == stats.c.location_id)
+        query = query.order_by(stats.c.review_count.desc().nullslast(), models.WingLocation.name)
+    else:
+        query = query.order_by(models.WingLocation.name)
+
     locations = query.offset(skip).limit(limit).all()
     _attach_rating_stats(locations, db)
     return locations
