@@ -4,6 +4,7 @@ import LocationsPage from './pages/LocationsPage'
 import ReviewsPage from './pages/ReviewsPage'
 import ReviewDetailPage from './pages/ReviewDetailPage'
 import LocationDetailPage from './pages/LocationDetailPage'
+import DuplicatesPage from './pages/DuplicatesPage'
 import './App.css'
 
 function App() {
@@ -36,6 +37,16 @@ function App() {
               Locations
             </NavLink>
             <NavLink
+              to="/duplicates"
+              style={({ isActive }) => ({
+                color: isActive ? '#c00' : '#666',
+                textDecoration: 'none',
+                fontWeight: isActive ? 600 : 400,
+              })}
+            >
+              Merge duplicates
+            </NavLink>
+            <NavLink
               to="/reviews"
               style={({ isActive }) => ({
                 color: isActive ? '#c00' : '#666',
@@ -52,6 +63,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/locations" element={<LocationsPage />} />
             <Route path="/locations/:id" element={<LocationDetailPage />} />
+            <Route path="/duplicates" element={<DuplicatesPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/reviews/:id" element={<ReviewDetailPage />} />
           </Routes>

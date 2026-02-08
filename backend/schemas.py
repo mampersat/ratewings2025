@@ -18,6 +18,28 @@ class WingLocation(WingLocationBase):
     class Config:
         orm_mode = True
 
+
+class LocationMergeRequest(BaseModel):
+    from_id: int
+    into_id: int
+
+
+class LocationMergeResponse(BaseModel):
+    reviews_moved: int
+    location_deleted: int
+
+
+class LocationDuplicateEntry(BaseModel):
+    id: int
+    name: str
+    address: Optional[str] = None
+    review_count: int
+
+
+class LocationDuplicateGroup(BaseModel):
+    normalized_name: str
+    locations: list[LocationDuplicateEntry]
+
 class WingReviewBase(BaseModel):
     rating: float
     comment: Optional[str] = None

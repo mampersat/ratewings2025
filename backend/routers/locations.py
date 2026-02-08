@@ -77,6 +77,57 @@ def read_locations(
     return locations
 
 
+def _normalize_name(name: str) -> str:
+    """Normalize for duplicate detection: lowercase, strip, collapse spaces."""
+    if not name:
+        return ""
+    return " ".join(name.lower().strip().split())
+
+
+@router.get("/duplicates", response_model=list[schemas.LocationDuplicateGroup])
+def read_duplicate_groups(db: Session = Depends(get_db)):
+    """Find locations that share the same normalized name (potential duplicates)."""
+    locations = db.query(models.WingLocation).all()
+    _attach_rating_stats(locations, db)
+    by_key = {}
+    for loc in locations:
+        key = _normalize_name(loc.name)
+        if not key:
+            continue
+        entry = schemas.LocationDuplicateEntry(
+            id=loc.id,
+            name=loc.name,
+            address=loc.address,
+            review_count=getattr(loc, "review_count", 0) or 0,
+        )
+        by_key.setdefault(key, []).append(entry)
+    return [
+        schemas.LocationDuplicateGroup(normalized_name=key, locations=group)
+        for key, group in sorted(by_key.items())
+        if len(group) > 1
+    ]
+
+
+@router.post("/merge", response_model=schemas.LocationMergeResponse)
+def merge_locations(body: schemas.LocationMergeRequest, db: Session = Depends(get_db)):
+    """Move all reviews from one location into another, then delete the source location."""
+    if body.from_id == body.into_id:
+        raise HTTPException(status_code=400, detail="from_id and into_id must be different")
+    source = db.query(models.WingLocation).filter(models.WingLocation.id == body.from_id).first()
+    target = db.query(models.WingLocation).filter(models.WingLocation.id == body.into_id).first()
+    if not source:
+        raise HTTPException(status_code=404, detail="Source location not found")
+    if not target:
+        raise HTTPException(status_code=404, detail="Target location not found")
+    count = db.query(models.WingReview).filter(models.WingReview.location_id == body.from_id).update(
+        {"location_id": body.into_id},
+        synchronize_session=False,
+    )
+    db.delete(source)
+    db.commit()
+    return schemas.LocationMergeResponse(reviews_moved=count, location_deleted=body.from_id)
+
+
 @router.post("/", response_model=schemas.WingLocation)
 def create_location(location: schemas.WingLocationCreate, db: Session = Depends(get_db)):
     db_location = models.WingLocation(**location.dict())
