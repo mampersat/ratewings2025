@@ -17,7 +17,7 @@ export default function ReviewList({ refresh }) {
         <thead>
           <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
             <th style={{ padding: '0.5rem 0.75rem' }}>Review</th>
-            <th style={{ padding: '0.5rem 0.75rem' }}>Location ID</th>
+            <th style={{ padding: '0.5rem 0.75rem' }}>Location</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Rating</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Comment</th>
           </tr>
@@ -28,7 +28,9 @@ export default function ReviewList({ refresh }) {
               <td style={{ padding: '0.5rem 0.75rem' }}>
                 <Link to={`/reviews/${rev.id}`} style={{ color: '#646cff' }}>#{rev.id}</Link>
               </td>
-              <td style={{ padding: '0.5rem 0.75rem' }}>{rev.location_id}</td>
+              <td style={{ padding: '0.5rem 0.75rem' }}>
+                {rev.location_name ?? `ID ${rev.location_id}`}
+              </td>
               <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating}</td>
               <td style={{ padding: '0.5rem 0.75rem' }}>{rev.comment ?? '—'}</td>
             </tr>

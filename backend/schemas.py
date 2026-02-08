@@ -25,6 +25,13 @@ class WingReviewBase(BaseModel):
 class WingReviewCreate(WingReviewBase):
     location_id: int
 
+
+class WingReviewUpdate(BaseModel):
+    location_id: Optional[int] = None
+    rating: Optional[float] = None
+    comment: Optional[str] = None
+
+
 class WingReview(WingReviewBase):
     id: int
     location_id: int

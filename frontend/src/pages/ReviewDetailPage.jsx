@@ -8,18 +8,33 @@ export default function ReviewDetailPage() {
   const [review, setReview] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [locations, setLocations] = useState([])
+  const [editLocationId, setEditLocationId] = useState('')
+  const [editRating, setEditRating] = useState('')
+  const [editComment, setEditComment] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const fetchReview = () => {
+    return fetch(`${API_BASE}/reviews/by-id/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(res.status === 404 ? 'Review not found' : 'Failed to load review')
+        return res.json()
+      })
+  }
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetch(`${API_BASE}/reviews/by-id/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(res.status === 404 ? 'Review not found' : 'Failed to load review')
-        return res.json()
-      })
+    fetchReview()
       .then((data) => {
-        if (!cancelled) setReview(data)
+        if (!cancelled) {
+          setReview(data)
+          setEditLocationId(String(data.location_id))
+          setEditRating(String(data.rating))
+          setEditComment(data.comment ?? '')
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -29,6 +44,49 @@ export default function ReviewDetailPage() {
       })
     return () => { cancelled = true }
   }, [id])
+
+  useEffect(() => {
+    if (!editing) return
+    fetch(`${API_BASE}/locations/?limit=500`)
+      .then((res) => res.json())
+      .then(setLocations)
+  }, [editing])
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    const body = {}
+    if (Number(editLocationId) !== review.location_id) body.location_id = Number(editLocationId)
+    if (Number(editRating) !== review.rating) body.rating = Number(editRating)
+    if ((editComment || '') !== (review.comment || '')) body.comment = editComment || null
+    if (Object.keys(body).length === 0) {
+      setEditing(false)
+      setSaving(false)
+      return
+    }
+    try {
+      const res = await fetch(`${API_BASE}/reviews/by-id/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      const updated = await fetchReview()
+      setReview(updated)
+      setEditing(false)
+    } catch (err) {
+      alert(err.message || 'Failed to save review')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditLocationId(String(review.location_id))
+    setEditRating(String(review.rating))
+    setEditComment(review.comment ?? '')
+    setEditing(false)
+  }
 
   if (loading) return <div style={{ maxWidth: 600, margin: 'auto', padding: 20, textAlign: 'left' }}>Loading…</div>
   if (error) {
@@ -47,18 +105,74 @@ export default function ReviewDetailPage() {
       </p>
       <article style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem' }}>
         <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>Review #{review.id}</h2>
-        <p style={{ margin: '0.5rem 0' }}>
-          <strong>Rating:</strong> {review.rating}/10
-        </p>
-        {(review.location_name || review.location_id) && (
-          <p style={{ margin: '0.5rem 0' }}>
-            <strong>Location:</strong>{' '}
-            {review.location_name ?? `ID ${review.location_id}`}
-            {review.location_address && ` — ${review.location_address}`}
-          </p>
-        )}
-        {review.comment && (
-          <p style={{ margin: '0.5rem 0', whiteSpace: 'pre-wrap' }}>{review.comment}</p>
+
+        {!editing ? (
+          <>
+            <p style={{ margin: '0.5rem 0' }}>
+              <strong>Rating:</strong> {review.rating}/10
+            </p>
+            {(review.location_name || review.location_id) && (
+              <p style={{ margin: '0.5rem 0' }}>
+                <strong>Location:</strong>{' '}
+                {review.location_name ?? `ID ${review.location_id}`}
+                {review.location_address && ` — ${review.location_address}`}
+              </p>
+            )}
+            {review.comment && (
+              <p style={{ margin: '0.5rem 0', whiteSpace: 'pre-wrap' }}>{review.comment}</p>
+            )}
+            <p style={{ marginTop: '1rem' }}>
+              <button type="button" onClick={() => setEditing(true)}>Edit review</button>
+            </p>
+          </>
+        ) : (
+          <form onSubmit={handleSave} style={{ marginTop: '0.5rem' }}>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="edit-location" style={{ display: 'block', marginBottom: 4 }}>Location</label>
+              <select
+                id="edit-location"
+                value={editLocationId}
+                required
+                onChange={(e) => setEditLocationId(e.target.value)}
+                style={{ width: '100%', padding: 6 }}
+              >
+                <option value="">Select location</option>
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}{loc.address ? ` — ${loc.address}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="edit-rating" style={{ display: 'block', marginBottom: 4 }}>Rating (0–10)</label>
+              <input
+                id="edit-rating"
+                type="number"
+                min={0}
+                max={10}
+                step={0.1}
+                value={editRating}
+                required
+                onChange={(e) => setEditRating(e.target.value)}
+                style={{ width: '100%', padding: 6 }}
+              />
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="edit-comment" style={{ display: 'block', marginBottom: 4 }}>Comment</label>
+              <textarea
+                id="edit-comment"
+                value={editComment}
+                onChange={(e) => setEditComment(e.target.value)}
+                rows={3}
+                style={{ width: '100%', padding: 6 }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+              <button type="button" onClick={handleCancel} disabled={saving}>Cancel</button>
+            </div>
+          </form>
         )}
       </article>
     </div>
