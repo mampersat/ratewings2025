@@ -20,9 +20,11 @@ Ensure the backend is running on `http://localhost:8000` (see repo root / backen
 
 ## Pages
 
-- **/** — Search (by city or “Find Near Me”)
-- **/locations** — Add and list wing locations
-- **/reviews** — Add and list reviews (table)
+- **/** — Search (by name/address or “Find Near Me”, sort by rating/name/reviews/near me)
+- **/locations/:id** — Location detail and its reviews
+- **/new-rating** — Add a rating (existing or new location)
+- **/duplicates** — Merge duplicate or selected locations (admin only)
+- **/reviews** — List reviews and add new ones
 
 ---
 
@@ -48,5 +50,6 @@ Backend uses SQLite (`backend/wings.db`) with two tables.
 | `location_id`| Integer | FK → `wing_locations.id`  |
 | `rating`     | Float   |                          |
 | `comment`    | String  |                          |
+| `created_at` | DateTime| Optional, nullable       |
 
 One location has many reviews; each review belongs to one location.
