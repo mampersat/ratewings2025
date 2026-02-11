@@ -11,13 +11,47 @@ export default function SearchPage() {
     minRating: 0,
     sortBy: 'rating' // 'rating', 'name', 'reviews'
   });
-  const [lat, setLat] = useState('');
-  const [lon, setLon] = useState('');
+  const [lat, setLat] = useState(null);
+  const [lon, setLon] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState(null);
   const [mode, setMode] = useState('city'); // 'city' or 'nearby'
   const navigate = useNavigate();
 
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocationError(null);
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLat(position.coords.latitude);
+        setLon(position.coords.longitude);
+        setMode('nearby');
+        setLocationLoading(false);
+      },
+      (err) => {
+        setLocationLoading(false);
+        const msg =
+          err.code === 1 ? 'Location permission denied.'
+          : err.code === 2 ? 'Location unavailable (e.g. network error).'
+          : err.code === 3 ? 'Location request timed out.'
+          : `Unable to get location: ${err.message || err.code}`;
+        setLocationError(msg);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  };
+
   useEffect(() => {
-    // Fetch locations whenever searchTerm or filters change
+    if (filters.sortBy === 'nearme' && lat == null && lon == null && !locationLoading && !locationError) {
+      requestLocation();
+    }
+  }, [filters.sortBy]);
+
+  useEffect(() => {
     fetchLocations();
   }, [searchTerm, lat, lon, filters, mode]);
 
@@ -27,14 +61,15 @@ export default function SearchPage() {
       if (mode === 'city' && searchTerm) {
         params.set('search', searchTerm);
       }
-      if (mode === 'nearby' && lat && lon) {
+      const useCoords = (mode === 'nearby' || filters.sortBy === 'nearme') && lat != null && lon != null;
+      if (useCoords) {
         params.set('lat', String(lat));
         params.set('lon', String(lon));
       }
       if (filters.minRating > 0) {
         params.set('min_rating', String(filters.minRating));
       }
-      if (filters.sortBy) {
+      if (filters.sortBy && filters.sortBy !== 'nearme') {
         params.set('sort_by', filters.sortBy);
       }
       params.set('limit', '100');
@@ -53,21 +88,17 @@ export default function SearchPage() {
   };
 
   const handleFindNearMe = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
+    handleFilterChange('sortBy', 'nearme');
+  };
+
+  const clearLocation = () => {
+    setLat(null);
+    setLon(null);
+    setLocationError(null);
+    setMode('city');
+    if (filters.sortBy === 'nearme') {
+      handleFilterChange('sortBy', 'rating');
     }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLat(position.coords.latitude);
-        setLon(position.coords.longitude);
-        setSearchTerm('');
-        setMode('nearby');
-      },
-      (error) => {
-        alert('Unable to retrieve your location.');
-      }
-    );
   };
 
   const handleFilterChange = (filterType, value) => {
@@ -105,17 +136,39 @@ export default function SearchPage() {
             value={searchTerm}
             onChange={handleSearch}
             className="search-input"
-            disabled={mode === 'nearby'}
           />
-          {/* <button onClick={handleFindNearMe} style={{ marginLeft: 8 }}>
-            Find Near Me
-          </button> */}
+          <button type="button" onClick={handleFindNearMe} className="find-near-me-btn" disabled={locationLoading}>
+            {locationLoading ? 'Getting location…' : 'Find Near Me'}
+          </button>
         </div>
+        {(lat != null && lon != null) && (
+          <div className="your-location-bar" data-surface="light">
+            <strong>Your location:</strong>{' '}
+            <span className="your-location-coords">{lat.toFixed(6)}, {lon.toFixed(6)}</span>
+            {' · '}
+            <button type="button" onClick={requestLocation} className="location-link-btn" disabled={locationLoading}>
+              Refresh
+            </button>
+            {' · '}
+            <button type="button" onClick={clearLocation} className="location-link-btn">
+              Clear
+            </button>
+          </div>
+        )}
+        {locationError && (
+          <div className="location-error" role="alert">
+            {locationError}
+            {' '}
+            <button type="button" onClick={requestLocation} className="location-link-btn" disabled={locationLoading}>
+              Try again
+            </button>
+          </div>
+        )}
         <div style={{ marginTop: 8, fontStyle: 'italic', color: '#888' }}>
-          {mode === 'nearby' && lat && lon ? (
-            <>Searching near your location ({lat.toFixed(4)}, {lon.toFixed(4)})</>
+          {(mode === 'nearby' || filters.sortBy === 'nearme') && lat != null && lon != null ? (
+            <>Sorted by distance from your location</>
           ) : (
-            <>Search by location name or address</>
+            <>Search by location name or address, or sort by Near me</>
           )}
         </div>
       </div>
@@ -144,6 +197,7 @@ export default function SearchPage() {
             <option value="rating">Highest rating</option>
             <option value="name">Name A–Z</option>
             <option value="reviews">Most reviews</option>
+            <option value="nearme">Near me</option>
           </select>
         </div>
       </div>
