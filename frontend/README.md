@@ -50,6 +50,7 @@ Backend uses SQLite (`backend/wings.db`) with two tables.
 | `location_id`| Integer | FK → `wing_locations.id`  |
 | `rating`     | Float   |                          |
 | `comment`    | String  |                          |
+| `heat`       | Integer | Optional, 0–10            |
 | `created_at` | DateTime| Optional, nullable       |
 
 One location has many reviews; each review belongs to one location.

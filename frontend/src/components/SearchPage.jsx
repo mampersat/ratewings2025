@@ -65,11 +65,13 @@ export default function SearchPage() {
       if (useCoords) {
         params.set('lat', String(lat));
         params.set('lon', String(lon));
+        params.set('max_distance', '20');
+        params.set('sort_by', filters.sortBy === 'nearme' ? 'rating' : filters.sortBy);
       }
       if (filters.minRating > 0) {
         params.set('min_rating', String(filters.minRating));
       }
-      if (filters.sortBy && filters.sortBy !== 'nearme') {
+      if (!useCoords && filters.sortBy && filters.sortBy !== 'nearme') {
         params.set('sort_by', filters.sortBy);
       }
       params.set('limit', '100');
@@ -166,7 +168,7 @@ export default function SearchPage() {
         )}
         <div style={{ marginTop: 8, fontStyle: 'italic', color: '#888' }}>
           {(mode === 'nearby' || filters.sortBy === 'nearme') && lat != null && lon != null ? (
-            <>Sorted by distance from your location</>
+            <>Within 20 miles, then sorted by dropdown below</>
           ) : (
             <>Search by location name or address, or sort by Near me</>
           )}
@@ -197,6 +199,7 @@ export default function SearchPage() {
             <option value="rating">Highest rating</option>
             <option value="name">Name A–Z</option>
             <option value="reviews">Most reviews</option>
+            <option value="heat">Hottest</option>
             <option value="nearme">Near me</option>
           </select>
         </div>
@@ -232,8 +235,15 @@ export default function SearchPage() {
                 {location.average_rating != null && location.review_count > 0 ? (
                   <>
                     <span className="location-rating-value">
-                      {Number(location.average_rating).toFixed(1)}/10
+                      Rating {Number(location.average_rating) % 1 === 0 ? Math.round(Number(location.average_rating)) : Number(location.average_rating).toFixed(1)}
+                      <span className="rating-out-of">/10</span>
                     </span>
+                    {location.average_heat != null && (
+                      <span className="location-rating-value">
+                        Heat {Number(location.average_heat) % 1 === 0 ? Math.round(Number(location.average_heat)) : Number(location.average_heat).toFixed(1)}
+                        <span className="rating-out-of">/10</span>
+                      </span>
+                    )}
                     <span className="location-rating-meta">
                       {location.review_count} review{location.review_count !== 1 ? 's' : ''}
                     </span>
@@ -261,8 +271,15 @@ export default function SearchPage() {
               {location.average_rating != null && location.review_count > 0 ? (
                 <>
                   <span className="location-rating-value">
-                    {Number(location.average_rating).toFixed(1)}/10
+                    Rating {Number(location.average_rating) % 1 === 0 ? Math.round(Number(location.average_rating)) : Number(location.average_rating).toFixed(1)}
+                    <span className="rating-out-of">/10</span>
                   </span>
+                  {location.average_heat != null && (
+                    <span className="location-rating-value">
+                      Heat {Number(location.average_heat) % 1 === 0 ? Math.round(Number(location.average_heat)) : Number(location.average_heat).toFixed(1)}
+                      <span className="rating-out-of">/10</span>
+                    </span>
+                  )}
                   <span className="location-rating-meta">
                     {location.review_count} review{location.review_count !== 1 ? 's' : ''}
                   </span>

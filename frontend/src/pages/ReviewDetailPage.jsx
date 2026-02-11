@@ -13,6 +13,7 @@ export default function ReviewDetailPage() {
   const [editLocationId, setEditLocationId] = useState('')
   const [editRating, setEditRating] = useState('')
   const [editComment, setEditComment] = useState('')
+  const [editHeat, setEditHeat] = useState('')
   const [saving, setSaving] = useState(false)
 
   const fetchReview = () => {
@@ -34,6 +35,7 @@ export default function ReviewDetailPage() {
           setEditLocationId(String(data.location_id))
           setEditRating(String(data.rating))
           setEditComment(data.comment ?? '')
+          setEditHeat(data.heat != null ? String(data.heat) : '')
         }
       })
       .catch((err) => {
@@ -59,6 +61,8 @@ export default function ReviewDetailPage() {
     if (Number(editLocationId) !== review.location_id) body.location_id = Number(editLocationId)
     if (Number(editRating) !== review.rating) body.rating = Number(editRating)
     if ((editComment || '') !== (review.comment || '')) body.comment = editComment || null
+    const newHeat = editHeat === '' ? null : Number(editHeat)
+    if (newHeat !== review.heat) body.heat = newHeat
     if (Object.keys(body).length === 0) {
       setEditing(false)
       setSaving(false)
@@ -85,6 +89,7 @@ export default function ReviewDetailPage() {
     setEditLocationId(String(review.location_id))
     setEditRating(String(review.rating))
     setEditComment(review.comment ?? '')
+    setEditHeat(review.heat != null ? String(review.heat) : '')
     setEditing(false)
   }
 
@@ -109,7 +114,10 @@ export default function ReviewDetailPage() {
         {!editing ? (
           <>
             <p style={{ margin: '0.5rem 0' }}>
-              <strong>Rating:</strong> {review.rating}/10
+              <strong>Rating:</strong> {review.rating % 1 === 0 ? Math.round(review.rating) : review.rating}<span className="rating-out-of">/10</span>
+              {review.heat != null && (
+                <> · <strong>Heat:</strong> {review.heat % 1 === 0 ? Math.round(review.heat) : review.heat}<span className="rating-out-of">/10</span></>
+              )}
             </p>
             {(review.location_name || review.location_id) && (
               <p style={{ margin: '0.5rem 0' }}>
@@ -155,6 +163,19 @@ export default function ReviewDetailPage() {
                 value={editRating}
                 required
                 onChange={(e) => setEditRating(e.target.value)}
+                style={{ width: '100%', padding: 6 }}
+              />
+            </div>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="edit-heat" style={{ display: 'block', marginBottom: 4 }}>Heat (0–10, optional)</label>
+              <input
+                id="edit-heat"
+                type="number"
+                min={0}
+                max={10}
+                step={1}
+                value={editHeat}
+                onChange={(e) => setEditHeat(e.target.value)}
                 style={{ width: '100%', padding: 6 }}
               />
             </div>

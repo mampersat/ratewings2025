@@ -21,6 +21,13 @@
   color: #646cff;
 }
 
+/* Rating/heat display: main number full size, "/10" smaller */
+.rating-out-of {
+  font-size: 0.75em;
+  opacity: 0.85;
+  font-weight: 400;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

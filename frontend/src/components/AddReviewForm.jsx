@@ -4,6 +4,7 @@ export default function AddReviewForm({ onAdd, refresh }) {
   const [locationId, setLocationId] = useState("");
   const [rating, setRating] = useState("");
   const [comment, setComment] = useState("");
+  const [heat, setHeat] = useState("");
   const [locations, setLocations] = useState([]);
 
   useEffect(() => {
@@ -21,12 +22,14 @@ export default function AddReviewForm({ onAdd, refresh }) {
         location_id: Number(locationId),
         rating: Number(rating),
         comment,
+        heat: heat === "" ? undefined : Number(heat),
       }),
     });
     if (res.ok) {
       setLocationId("");
       setRating("");
       setComment("");
+      setHeat("");
       if (onAdd) onAdd();
     } else {
       alert("Failed to add review");
@@ -57,6 +60,15 @@ export default function AddReviewForm({ onAdd, refresh }) {
         step={0.1}
         required
         onChange={(e) => setRating(e.target.value)}
+      />
+      <input
+        type="number"
+        placeholder="Heat (0-10, optional)"
+        value={heat}
+        min={0}
+        max={10}
+        step={1}
+        onChange={(e) => setHeat(e.target.value)}
       />
       <input
         placeholder="Comment"

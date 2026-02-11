@@ -14,21 +14,23 @@ def get_db():
         db.close()
 
 def _attach_rating_stats(locations, db: Session):
-    """Attach average_rating and review_count to each location."""
+    """Attach average_rating, average_heat and review_count to each location."""
     if not locations:
         return
     stats = db.query(
         models.WingReview.location_id,
         func.avg(models.WingReview.rating).label("avg_rating"),
+        func.avg(models.WingReview.heat).label("avg_heat"),
         func.count(models.WingReview.id).label("review_count"),
     ).group_by(models.WingReview.location_id).all()
     stats_dict = {
-        loc_id: (float(avg) if avg is not None else None, int(cnt))
-        for loc_id, avg, cnt in stats
+        loc_id: (float(avg_r) if avg_r is not None else None, float(avg_h) if avg_h is not None else None, int(cnt))
+        for loc_id, avg_r, avg_h, cnt in stats
     }
     for loc in locations:
-        avg_rating, review_count = stats_dict.get(loc.id, (None, 0))
+        avg_rating, avg_heat, review_count = stats_dict.get(loc.id, (None, None, 0))
         loc.average_rating = avg_rating
+        loc.average_heat = avg_heat
         loc.review_count = review_count
 
 
@@ -50,8 +52,9 @@ def read_locations(
     ids: str = Query(None, description="Comma-separated location IDs to fetch (e.g. ids=1,2,3)"),
     lat: float = Query(None, description="Latitude for distance search"),
     lon: float = Query(None, description="Longitude for distance search"),
+    max_distance: float = Query(20, description="Max distance in miles when lat/lon provided"),
     min_rating: float = Query(None, description="Minimum average rating (0-10)"),
-    sort_by: str = Query(None, description="Sort: rating, name, reviews"),
+    sort_by: str = Query(None, description="Sort: rating, name, reviews, heat"),
     db: Session = Depends(get_db)
 ):
     query = db.query(models.WingLocation)
@@ -88,20 +91,35 @@ def read_locations(
             func.sin(func.radians(models.WingLocation.lat))
         )
         query = query.add_columns(distance_expr.label("distance"))
-        query = query.order_by("distance")
-        results = query.offset(skip).limit(limit).all()
+        # Fetch enough candidates to filter by max_distance then sort (no limit yet)
+        results = query.order_by("distance").limit(500).all()
         locations = []
         for loc, dist in results:
-            loc.distance = float(dist) if dist is not None else None
+            d = float(dist) if dist is not None else None
+            if d is None:
+                continue  # skip locations with no coordinates
+            if max_distance is not None and d > max_distance:
+                continue
+            loc.distance = d
             locations.append(loc)
         _attach_rating_stats(locations, db)
-        return locations
+        # Apply sort_by then limit
+        if sort_by == "rating":
+            locations.sort(key=lambda loc: (-(loc.average_rating or 0), loc.name or ""))
+        elif sort_by == "heat":
+            locations.sort(key=lambda loc: (-(loc.average_heat or 0), loc.name or ""))
+        elif sort_by == "reviews":
+            locations.sort(key=lambda loc: (-(loc.review_count or 0), loc.name or ""))
+        else:
+            locations.sort(key=lambda loc: (loc.name or "").lower())
+        return locations[skip : skip + limit]
 
     if sort_by == "rating":
         stats = (
             db.query(
                 models.WingReview.location_id,
                 func.avg(models.WingReview.rating).label("avg_rating"),
+                func.avg(models.WingReview.heat).label("avg_heat"),
                 func.count(models.WingReview.id).label("review_count"),
             )
             .group_by(models.WingReview.location_id)
@@ -109,11 +127,25 @@ def read_locations(
         )
         query = query.outerjoin(stats, models.WingLocation.id == stats.c.location_id)
         query = query.order_by(stats.c.avg_rating.desc().nullslast(), models.WingLocation.name)
+    elif sort_by == "heat":
+        stats = (
+            db.query(
+                models.WingReview.location_id,
+                func.avg(models.WingReview.rating).label("avg_rating"),
+                func.avg(models.WingReview.heat).label("avg_heat"),
+                func.count(models.WingReview.id).label("review_count"),
+            )
+            .group_by(models.WingReview.location_id)
+            .subquery()
+        )
+        query = query.outerjoin(stats, models.WingLocation.id == stats.c.location_id)
+        query = query.order_by(stats.c.avg_heat.desc().nullslast(), models.WingLocation.name)
     elif sort_by == "reviews":
         stats = (
             db.query(
                 models.WingReview.location_id,
                 func.avg(models.WingReview.rating).label("avg_rating"),
+                func.avg(models.WingReview.heat).label("avg_heat"),
                 func.count(models.WingReview.id).label("review_count"),
             )
             .group_by(models.WingReview.location_id)

@@ -29,6 +29,7 @@ export default function ReviewList({ refresh }) {
             <th style={{ padding: '0.5rem 0.75rem' }}>Review</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Location</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Rating</th>
+            <th style={{ padding: '0.5rem 0.75rem' }}>Heat</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Comment</th>
           </tr>
@@ -42,7 +43,8 @@ export default function ReviewList({ refresh }) {
               <td style={{ padding: '0.5rem 0.75rem' }}>
                 {rev.location_name ?? `ID ${rev.location_id}`}
               </td>
-              <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating}</td>
+              <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating % 1 === 0 ? Math.round(rev.rating) : rev.rating}<span className="rating-out-of">/10</span></td>
+              <td style={{ padding: '0.5rem 0.75rem' }}>{rev.heat != null ? <>{rev.heat % 1 === 0 ? Math.round(rev.heat) : rev.heat}<span className="rating-out-of">/10</span></> : '—'}</td>
               <td style={{ padding: '0.5rem 0.75rem' }}>{formatDate(rev.created_at)}</td>
               <td style={{ padding: '0.5rem 0.75rem' }}>{rev.comment ?? '—'}</td>
             </tr>

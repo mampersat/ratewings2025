@@ -71,8 +71,11 @@ export default function LocationDetailPage() {
         <p style={{ margin: '0.5rem 0' }}>
           <strong>Rating:</strong>{' '}
           {location.average_rating != null
-            ? `${Number(location.average_rating).toFixed(1)}/10`
+            ? <>{Number(location.average_rating) % 1 === 0 ? Math.round(Number(location.average_rating)) : Number(location.average_rating).toFixed(1)}<span className="rating-out-of">/10</span></>
             : 'No ratings yet'}
+          {location.average_heat != null && (
+            <> · <strong>Heat:</strong> {Number(location.average_heat) % 1 === 0 ? Math.round(Number(location.average_heat)) : Number(location.average_heat).toFixed(1)}<span className="rating-out-of">/10</span></>
+          )}
           {location.review_count != null && location.review_count > 0 && (
             <> ({location.review_count} review{location.review_count !== 1 ? 's' : ''})</>
           )}
@@ -88,6 +91,7 @@ export default function LocationDetailPage() {
             <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
               <th style={{ padding: '0.5rem 0.75rem' }}>Review</th>
               <th style={{ padding: '0.5rem 0.75rem' }}>Rating</th>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Heat</th>
               <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
               <th style={{ padding: '0.5rem 0.75rem' }}>Comment</th>
             </tr>
@@ -98,7 +102,8 @@ export default function LocationDetailPage() {
                 <td style={{ padding: '0.5rem 0.75rem' }}>
                   <Link to={`/reviews/${rev.id}`}>#{rev.id}</Link>
                 </td>
-                <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating}/10</td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating % 1 === 0 ? Math.round(rev.rating) : rev.rating}<span className="rating-out-of">/10</span></td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>{rev.heat != null ? <>{rev.heat % 1 === 0 ? Math.round(rev.heat) : rev.heat}<span className="rating-out-of">/10</span></> : '—'}</td>
                 <td style={{ padding: '0.5rem 0.75rem' }}>{formatReviewDate(rev.created_at)}</td>
                 <td style={{ padding: '0.5rem 0.75rem' }}>{rev.comment ?? '—'}</td>
               </tr>

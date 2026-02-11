@@ -40,6 +40,7 @@ export default function LocationList({ refresh }) {
             <th style={{ padding: "0.5rem 0.75rem" }}>Name</th>
             <th style={{ padding: "0.5rem 0.75rem" }}>Address</th>
             <th style={{ padding: "0.5rem 0.75rem" }}>Rating</th>
+            <th style={{ padding: "0.5rem 0.75rem" }}>Heat</th>
             <th style={{ padding: "0.5rem 0.75rem" }}>Reviews</th>
           </tr>
         </thead>
@@ -55,8 +56,11 @@ export default function LocationList({ refresh }) {
               <td style={{ padding: "0.5rem 0.75rem" }}>{loc.address ?? "—"}</td>
               <td style={{ padding: "0.5rem 0.75rem" }}>
                 {loc.average_rating != null
-                  ? `${Number(loc.average_rating).toFixed(1)}/10`
+                  ? <>{Number(loc.average_rating) % 1 === 0 ? Math.round(Number(loc.average_rating)) : Number(loc.average_rating).toFixed(1)}<span className="rating-out-of">/10</span></>
                   : "—"}
+              </td>
+              <td style={{ padding: "0.5rem 0.75rem" }}>
+                {loc.average_heat != null ? <>{Number(loc.average_heat) % 1 === 0 ? Math.round(Number(loc.average_heat)) : Number(loc.average_heat).toFixed(1)}<span className="rating-out-of">/10</span></> : "—"}
               </td>
               <td style={{ padding: "0.5rem 0.75rem" }}>
                 {loc.review_count != null ? loc.review_count : 0}

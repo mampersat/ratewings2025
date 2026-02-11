@@ -11,6 +11,7 @@ export default function NewRatingPage() {
   const [newAddress, setNewAddress] = useState('')
   const [rating, setRating] = useState('')
   const [comment, setComment] = useState('')
+  const [heat, setHeat] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(null) // { locationId, reviewId } or error message
 
@@ -60,6 +61,7 @@ export default function NewRatingPage() {
           location_id: locId,
           rating: Number(rating),
           comment: comment.trim() || undefined,
+          heat: heat === '' ? undefined : Number(heat),
         }),
       })
       if (!reviewRes.ok) {
@@ -73,6 +75,7 @@ export default function NewRatingPage() {
       setNewAddress('')
       setRating('')
       setComment('')
+      setHeat('')
     } catch (err) {
       setSuccess({ error: err.message })
     } finally {
@@ -183,6 +186,20 @@ export default function NewRatingPage() {
             required
             onChange={(e) => setRating(e.target.value)}
             style={{ width: '100%', padding: 8 }}
+          />
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="heat" style={{ display: 'block', marginBottom: 4 }}>Heat (0–10, optional)</label>
+          <input
+            id="heat"
+            type="number"
+            min={0}
+            max={10}
+            step={1}
+            value={heat}
+            onChange={(e) => setHeat(e.target.value)}
+            placeholder=""
+            style={{ width: '100%', padding: 8, marginBottom: '1rem' }}
           />
         </div>
         <div style={{ marginBottom: '1rem' }}>

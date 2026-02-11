@@ -15,6 +15,7 @@ class WingLocation(WingLocationBase):
     id: int
     distance: Optional[float] = None
     average_rating: Optional[float] = None
+    average_heat: Optional[float] = None
     review_count: Optional[int] = None
     class Config:
         orm_mode = True
@@ -44,6 +45,7 @@ class LocationDuplicateGroup(BaseModel):
 class WingReviewBase(BaseModel):
     rating: float
     comment: Optional[str] = None
+    heat: Optional[int] = None  # 0-10
 
 class WingReviewCreate(WingReviewBase):
     location_id: int
@@ -53,6 +55,7 @@ class WingReviewUpdate(BaseModel):
     location_id: Optional[int] = None
     rating: Optional[float] = None
     comment: Optional[str] = None
+    heat: Optional[int] = None
 
 
 class WingReview(WingReviewBase):

@@ -18,5 +18,6 @@ class WingReview(Base):
     location_id = Column(Integer, ForeignKey("wing_locations.id"))
     rating = Column(Float)
     comment = Column(String)
+    heat = Column(Integer, nullable=True)  # 0-10 heat level, backfilled from "heat: N" in comment
     created_at = Column(DateTime, default=datetime.utcnow, nullable=True)
     location = relationship("WingLocation", back_populates="reviews") 
