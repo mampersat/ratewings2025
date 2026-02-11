@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { isAdmin } from '../utils/admin'
 
 const API_BASE = 'http://localhost:8000'
 
 export default function DuplicatesPage() {
+  const [searchParams] = useSearchParams()
+  const idsParam = searchParams.get('ids') // e.g. "1,2,3" from Search "Merge selected"
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [merging, setMerging] = useState(null) // { fromId, intoId } while request in flight
   const [mergeResult, setMergeResult] = useState(null) // { reviews_moved, location_deleted } after success
+  const [fromSearchSelection, setFromSearchSelection] = useState(false) // true when we loaded from ?ids=
 
   const fetchDuplicates = () => {
     setError(null)
@@ -22,9 +26,47 @@ export default function DuplicatesPage() {
       .finally(() => setLoading(false))
   }
 
+  const fetchLocationsByIds = (idsString) => {
+    setError(null)
+    const url = new URL(`${API_BASE}/locations/`)
+    url.searchParams.set('ids', idsString)
+    url.searchParams.set('limit', '100')
+    return fetch(url.toString())
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load locations')
+        return res.json()
+      })
+      .then((locations) => {
+        if (!locations.length) {
+          setGroups([])
+          return
+        }
+        const entryShape = (loc) => ({
+          id: loc.id,
+          name: loc.name,
+          address: loc.address ?? null,
+          review_count: typeof loc.review_count === 'number' ? loc.review_count : 0,
+        })
+        setGroups([
+          {
+            normalized_name: 'Selected locations',
+            locations: locations.map(entryShape),
+          },
+        ])
+        setFromSearchSelection(true)
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
   useEffect(() => {
-    fetchDuplicates()
-  }, [])
+    if (idsParam && idsParam.trim()) {
+      fetchLocationsByIds(idsParam.trim())
+    } else {
+      setFromSearchSelection(false)
+      fetchDuplicates()
+    }
+  }, [idsParam])
 
   const handleMerge = async (fromId, intoId) => {
     if (fromId === intoId) return
@@ -39,12 +81,25 @@ export default function DuplicatesPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Merge failed')
       setMergeResult(data)
-      await fetchDuplicates()
+      if (fromSearchSelection && idsParam) await fetchLocationsByIds(idsParam.trim())
+      else await fetchDuplicates()
     } catch (err) {
       alert(err.message || 'Merge failed')
     } finally {
       setMerging(null)
     }
+  }
+
+  if (!isAdmin()) {
+    return (
+      <div style={{ maxWidth: 800, margin: 'auto', padding: 20, textAlign: 'left' }}>
+        <h2 style={{ marginTop: 0 }}>Admin only</h2>
+        <p style={{ color: '#666' }}>Merge locations is only available to admins.</p>
+        <p>
+          <Link to="/" style={{ color: '#646cff' }}>← Search</Link>
+        </p>
+      </div>
+    )
   }
 
   if (loading) {
@@ -68,13 +123,15 @@ export default function DuplicatesPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: 'auto', padding: 20, textAlign: 'left' }}>
-      <h2 style={{ marginTop: 0 }}>Duplicate locations</h2>
+      <h2 style={{ marginTop: 0 }}>{fromSearchSelection ? 'Merge selected locations' : 'Duplicate locations'}</h2>
       <p style={{ color: '#666', marginBottom: '1.5rem' }}>
-        Locations grouped by normalized name. Pick one to keep and merge the others into it.
+        {fromSearchSelection
+          ? 'Pick one location to keep and merge the others into it. Reviews from merged locations will move to the chosen one.'
+          : 'Locations grouped by normalized name. Pick one to keep and merge the others into it.'}
       </p>
 
       {mergeResult && (
-        <p style={{ padding: 8, background: '#e8f5e9', borderRadius: 6, marginBottom: '1rem', color: '#1a1a1a' }}>
+        <p data-surface="light" style={{ padding: 8, background: '#e8f5e9', borderRadius: 6, marginBottom: '1rem' }}>
           Merged: {mergeResult.reviews_moved} review(s) moved, location #{mergeResult.location_deleted} removed.
         </p>
       )}
@@ -86,7 +143,8 @@ export default function DuplicatesPage() {
           {groups.map((group) => (
             <section
               key={group.normalized_name}
-              style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1rem', background: '#fafafa', color: '#1a1a1a' }}
+              data-surface="light"
+              style={{ border: '1px solid #ddd', borderRadius: 8, padding: '1rem', background: '#fafafa' }}
             >
               <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#1a1a1a' }}>
                 “{group.normalized_name}” ({group.locations.length} locations)
@@ -149,7 +207,7 @@ export default function DuplicatesPage() {
       )}
 
       <p style={{ marginTop: '1.5rem' }}>
-        <Link to="/locations" style={{ color: '#646cff' }}>← Back to locations</Link>
+        <Link to="/" style={{ color: '#646cff' }}>← Search</Link>
       </p>
     </div>
   )

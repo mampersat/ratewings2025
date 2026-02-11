@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 import models, schemas
 from database import SessionLocal
@@ -13,8 +13,16 @@ def get_db():
         db.close()
 
 @router.get("/", response_model=list[schemas.WingReviewWithLocation])
-def read_reviews(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    reviews = db.query(models.WingReview).offset(skip).limit(limit).all()
+def read_reviews(
+    skip: int = 0,
+    limit: int = 100,
+    location_id: int = Query(None, description="Filter by location"),
+    db: Session = Depends(get_db),
+):
+    query = db.query(models.WingReview)
+    if location_id is not None:
+        query = query.filter(models.WingReview.location_id == location_id)
+    reviews = query.offset(skip).limit(limit).all()
     if not reviews:
         return []
     loc_ids = {r.location_id for r in reviews}
@@ -26,6 +34,7 @@ def read_reviews(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
             "location_id": r.location_id,
             "rating": r.rating,
             "comment": r.comment,
+            "created_at": getattr(r, "created_at", None),
             "location_name": loc_map.get(r.location_id, {}).get("name"),
             "location_address": loc_map.get(r.location_id, {}).get("address"),
         }
@@ -43,6 +52,7 @@ def read_review(review_id: int, db: Session = Depends(get_db)):
         "location_id": review.location_id,
         "rating": review.rating,
         "comment": review.comment,
+        "created_at": getattr(review, "created_at", None),
         "location_name": location.name if location else None,
         "location_address": location.address if location else None,
     }

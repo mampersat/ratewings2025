@@ -13,6 +13,14 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Light-surface cards/panels: force dark text so they stay readable on dark page background */
+[data-surface="light"] {
+  color: #1a1a1a;
+}
+[data-surface="light"] a {
+  color: #646cff;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -53,7 +61,6 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
-
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -66,3 +73,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+

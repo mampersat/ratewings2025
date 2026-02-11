@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
@@ -57,6 +58,7 @@ class WingReviewUpdate(BaseModel):
 class WingReview(WingReviewBase):
     id: int
     location_id: int
+    created_at: Optional[datetime] = None
     class Config:
         orm_mode = True
 

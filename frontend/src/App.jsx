@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import HomePage from './pages/HomePage'
-import LocationsPage from './pages/LocationsPage'
 import ReviewsPage from './pages/ReviewsPage'
 import ReviewDetailPage from './pages/ReviewDetailPage'
 import LocationDetailPage from './pages/LocationDetailPage'
 import DuplicatesPage from './pages/DuplicatesPage'
+import NewRatingPage from './pages/NewRatingPage'
+import UnlockAdminPage from './pages/UnlockAdminPage'
+import { isAdmin } from './utils/admin'
 import './App.css'
 
 function App() {
@@ -27,25 +29,27 @@ function App() {
               Search
             </NavLink>
             <NavLink
-              to="/locations"
+              to="/new-rating"
               style={({ isActive }) => ({
                 color: isActive ? '#c00' : '#666',
                 textDecoration: 'none',
                 fontWeight: isActive ? 600 : 400,
               })}
             >
-              Locations
+              New Rating
             </NavLink>
-            <NavLink
-              to="/duplicates"
-              style={({ isActive }) => ({
-                color: isActive ? '#c00' : '#666',
-                textDecoration: 'none',
-                fontWeight: isActive ? 600 : 400,
-              })}
-            >
-              Merge duplicates
-            </NavLink>
+            {isAdmin() && (
+              <NavLink
+                to="/duplicates"
+                style={({ isActive }) => ({
+                  color: isActive ? '#c00' : '#666',
+                  textDecoration: 'none',
+                  fontWeight: isActive ? 600 : 400,
+                })}
+              >
+                Merge duplicates
+              </NavLink>
+            )}
             <NavLink
               to="/reviews"
               style={({ isActive }) => ({
@@ -61,8 +65,9 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/locations" element={<LocationsPage />} />
             <Route path="/locations/:id" element={<LocationDetailPage />} />
+            <Route path="/new-rating" element={<NewRatingPage />} />
+            <Route path="/matt" element={<UnlockAdminPage />} />
             <Route path="/duplicates" element={<DuplicatesPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/reviews/:id" element={<ReviewDetailPage />} />

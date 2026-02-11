@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+function formatDate(isoString) {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString(undefined, { dateStyle: "short" });
+  } catch {
+    return "—";
+  }
+}
+
 export default function ReviewList({ refresh }) {
   const [reviews, setReviews] = useState([]);
 
@@ -19,6 +29,7 @@ export default function ReviewList({ refresh }) {
             <th style={{ padding: '0.5rem 0.75rem' }}>Review</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Location</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Rating</th>
+            <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
             <th style={{ padding: '0.5rem 0.75rem' }}>Comment</th>
           </tr>
         </thead>
@@ -32,6 +43,7 @@ export default function ReviewList({ refresh }) {
                 {rev.location_name ?? `ID ${rev.location_id}`}
               </td>
               <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating}</td>
+              <td style={{ padding: '0.5rem 0.75rem' }}>{formatDate(rev.created_at)}</td>
               <td style={{ padding: '0.5rem 0.75rem' }}>{rev.comment ?? '—'}</td>
             </tr>
           ))}

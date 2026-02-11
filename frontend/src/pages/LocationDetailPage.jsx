@@ -3,9 +3,20 @@ import { useParams, Link } from 'react-router-dom'
 
 const API_BASE = 'http://localhost:8000'
 
+function formatReviewDate(isoString) {
+  if (!isoString) return '—'
+  try {
+    const d = new Date(isoString)
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { dateStyle: 'short' })
+  } catch {
+    return '—'
+  }
+}
+
 export default function LocationDetailPage() {
   const { id } = useParams()
   const [location, setLocation] = useState(null)
+  const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -13,13 +24,18 @@ export default function LocationDetailPage() {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetch(`${API_BASE}/locations/by-id/${id}`)
-      .then((res) => {
+    Promise.all([
+      fetch(`${API_BASE}/locations/by-id/${id}`).then((res) => {
         if (!res.ok) throw new Error(res.status === 404 ? 'Location not found' : 'Failed to load location')
         return res.json()
-      })
-      .then((data) => {
-        if (!cancelled) setLocation(data)
+      }),
+      fetch(`${API_BASE}/reviews/?location_id=${id}&limit=500`).then((res) => res.json()),
+    ])
+      .then(([locData, reviewsData]) => {
+        if (!cancelled) {
+          setLocation(locData)
+          setReviews(Array.isArray(reviewsData) ? reviewsData : [])
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -30,22 +46,22 @@ export default function LocationDetailPage() {
     return () => { cancelled = true }
   }, [id])
 
-  if (loading) return <div style={{ maxWidth: 600, margin: 'auto', padding: 20, textAlign: 'left' }}>Loading…</div>
+  if (loading) return <div style={{ maxWidth: 700, margin: 'auto', padding: 20, textAlign: 'left' }}>Loading…</div>
   if (error) {
     return (
-      <div style={{ maxWidth: 600, margin: 'auto', padding: 20, textAlign: 'left' }}>
+      <div style={{ maxWidth: 700, margin: 'auto', padding: 20, textAlign: 'left' }}>
         <p>{error}</p>
-        <Link to="/locations">Back to locations</Link>
+        <Link to="/">← Search</Link>
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: 'auto', padding: 20, textAlign: 'left' }}>
+    <div style={{ maxWidth: 700, margin: 'auto', padding: 20, textAlign: 'left' }}>
       <p style={{ marginBottom: '1rem' }}>
-        <Link to="/locations" style={{ color: '#646cff' }}>← Back to locations</Link>
+        <Link to="/">← Search</Link>
       </p>
-      <article style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem' }}>
+      <article data-surface="light" style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem', marginBottom: '1.5rem', background: '#fff' }}>
         <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>{location.name}</h2>
         {location.address && (
           <p style={{ margin: '0.5rem 0' }}>
@@ -61,10 +77,35 @@ export default function LocationDetailPage() {
             <> ({location.review_count} review{location.review_count !== 1 ? 's' : ''})</>
           )}
         </p>
-        <p style={{ margin: '0.5rem 0' }}>
-          <Link to="/reviews" style={{ color: '#646cff' }}>View all reviews</Link>
-        </p>
       </article>
+
+      <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Reviews</h3>
+      {reviews.length === 0 ? (
+        <p style={{ color: '#666' }}>No reviews yet for this location.</p>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Review</th>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Rating</th>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
+              <th style={{ padding: '0.5rem 0.75rem' }}>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reviews.map((rev) => (
+              <tr key={rev.id} style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: '0.5rem 0.75rem' }}>
+                  <Link to={`/reviews/${rev.id}`}>#{rev.id}</Link>
+                </td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>{rev.rating}/10</td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>{formatReviewDate(rev.created_at)}</td>
+                <td style={{ padding: '0.5rem 0.75rem' }}>{rev.comment ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }

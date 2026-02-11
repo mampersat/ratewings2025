@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -17,4 +18,5 @@ class WingReview(Base):
     location_id = Column(Integer, ForeignKey("wing_locations.id"))
     rating = Column(Float)
     comment = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=True)
     location = relationship("WingLocation", back_populates="reviews") 

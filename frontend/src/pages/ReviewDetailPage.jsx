@@ -103,7 +103,7 @@ export default function ReviewDetailPage() {
       <p style={{ marginBottom: '1rem' }}>
         <Link to="/reviews" style={{ color: '#646cff' }}>← Back to reviews</Link>
       </p>
-      <article style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem' }}>
+      <article data-surface="light" style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem', background: '#fff' }}>
         <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>Review #{review.id}</h2>
 
         {!editing ? (

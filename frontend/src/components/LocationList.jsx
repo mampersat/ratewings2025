@@ -5,12 +5,30 @@ const API_BASE = "http://localhost:8000";
 
 export default function LocationList({ refresh }) {
   const [locations, setLocations] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    setError(null);
     fetch(`${API_BASE}/locations/?limit=500`)
-      .then((res) => res.json())
-      .then(setLocations);
+      .then((res) => {
+        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+        return res.json();
+      })
+      .then(setLocations)
+      .catch((err) => setError(err.message || "Failed to fetch locations"));
   }, [refresh]);
+
+  if (error) {
+    return (
+      <div>
+        <h2>Wing Locations</h2>
+        <p style={{ color: "#c00" }}>{error}</p>
+        <p style={{ fontSize: "0.9rem", color: "#666" }}>
+          Make sure the backend is running at <code>{API_BASE}</code> (e.g. <code>uvicorn main:app --port 8000</code> or Docker).
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>

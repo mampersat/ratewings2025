@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { isAdmin } from '../utils/admin';
 import './SearchPage.css';
 
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locations, setLocations] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [filters, setFilters] = useState({
     minRating: 0,
     sortBy: 'rating' // 'rating', 'name', 'reviews'
@@ -11,6 +14,7 @@ export default function SearchPage() {
   const [lat, setLat] = useState('');
   const [lon, setLon] = useState('');
   const [mode, setMode] = useState('city'); // 'city' or 'nearby'
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch locations whenever searchTerm or filters change
@@ -73,6 +77,23 @@ export default function SearchPage() {
     }));
   };
 
+  const toggleSelect = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const mergeSelected = () => {
+    if (selectedIds.size < 2) return;
+    const ids = Array.from(selectedIds).join(',');
+    navigate(`/duplicates?ids=${encodeURIComponent(ids)}`);
+  };
+
   return (
     <div className="search-page">
       <div className="search-header">
@@ -86,9 +107,9 @@ export default function SearchPage() {
             className="search-input"
             disabled={mode === 'nearby'}
           />
-          <button onClick={handleFindNearMe} style={{ marginLeft: 8 }}>
+          {/* <button onClick={handleFindNearMe} style={{ marginLeft: 8 }}>
             Find Near Me
-          </button>
+          </button> */}
         </div>
         <div style={{ marginTop: 8, fontStyle: 'italic', color: '#888' }}>
           {mode === 'nearby' && lat && lon ? (
@@ -127,9 +148,59 @@ export default function SearchPage() {
         </div>
       </div>
 
+      {isAdmin() && selectedIds.size >= 2 && (
+        <div className="merge-selected-bar" data-surface="light">
+          <button type="button" onClick={mergeSelected} className="merge-selected-btn">
+            Merge selected ({selectedIds.size}) →
+          </button>
+        </div>
+      )}
       <div className="results-section">
-        {locations.map(location => (
-          <div key={location.id} className="location-card">
+        {locations.map(location => isAdmin() ? (
+          <div
+            key={location.id}
+            className="location-card location-card-with-checkbox"
+            data-surface="light"
+          >
+            <input
+              type="checkbox"
+              checked={selectedIds.has(location.id)}
+              onChange={(e) => toggleSelect(e, location.id)}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Select ${location.name}`}
+            />
+            <div className="location-card-content">
+              <h3>
+                <Link to={`/locations/${location.id}`}>{location.name}</Link>
+              </h3>
+              <p>{location.address}</p>
+              <div className="location-rating-box">
+                {location.average_rating != null && location.review_count > 0 ? (
+                  <>
+                    <span className="location-rating-value">
+                      {Number(location.average_rating).toFixed(1)}/10
+                    </span>
+                    <span className="location-rating-meta">
+                      {location.review_count} review{location.review_count !== 1 ? 's' : ''}
+                    </span>
+                  </>
+                ) : (
+                  <span className="location-rating-none">No ratings yet</span>
+                )}
+              </div>
+              {location.distance !== undefined && location.distance !== null && (
+                <p><strong>Distance:</strong> {location.distance.toFixed(2)} miles</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <Link
+            key={location.id}
+            to={`/locations/${location.id}`}
+            className="location-card location-card-link"
+            data-surface="light"
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
             <h3>{location.name}</h3>
             <p>{location.address}</p>
             <div className="location-rating-box">
@@ -149,7 +220,7 @@ export default function SearchPage() {
             {location.distance !== undefined && location.distance !== null && (
               <p><strong>Distance:</strong> {location.distance.toFixed(2)} miles</p>
             )}
-          </div>
+          </Link>
         ))}
       </div>
     </div>

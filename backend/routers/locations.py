@@ -47,6 +47,7 @@ def read_locations(
     skip: int = 0,
     limit: int = 100,
     search: str = Query(None, description="Search by location name or address"),
+    ids: str = Query(None, description="Comma-separated location IDs to fetch (e.g. ids=1,2,3)"),
     lat: float = Query(None, description="Latitude for distance search"),
     lon: float = Query(None, description="Longitude for distance search"),
     min_rating: float = Query(None, description="Minimum average rating (0-10)"),
@@ -54,6 +55,11 @@ def read_locations(
     db: Session = Depends(get_db)
 ):
     query = db.query(models.WingLocation)
+
+    if ids:
+        id_list = [int(x.strip()) for x in ids.split(",") if x.strip()]
+        if id_list:
+            query = query.filter(models.WingLocation.id.in_(id_list))
 
     if search:
         term = f"%{search.strip()}%"
