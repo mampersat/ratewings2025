@@ -1,6 +1,6 @@
 # Chicken Wing Rating App — Frontend
 
-React + Vite frontend for the Chicken Wing Rating API. Search locations, add locations and reviews, and browse in a table.
+React + Vite frontend for the Chicken Wing Rating API. Find locations, add locations and reviews, and browse in a table.
 
 ## Run locally
 
@@ -20,9 +20,9 @@ Ensure the backend is running on `http://localhost:8000` (see repo root / backen
 
 ## Pages
 
-- **/** — Search (by name/address or “Find Near Me”, sort by rating/name/reviews/near me)
+- **/** — Find (by name/address or “Find Near Me”, sort by rating/name/reviews/near me)
 - **/locations/:id** — Location detail and its reviews
-- **/new-rating** — Add a rating (existing or new location)
+- **/new-rating** — Rate (add a rating for existing or new location)
 - **/duplicates** — Merge duplicate or selected locations (admin only)
 - **/reviews** — List reviews and add new ones
 

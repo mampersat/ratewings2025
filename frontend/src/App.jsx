@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import HomePage from './pages/HomePage'
-import ReviewsPage from './pages/ReviewsPage'
 import ReviewDetailPage from './pages/ReviewDetailPage'
 import LocationDetailPage from './pages/LocationDetailPage'
 import DuplicatesPage from './pages/DuplicatesPage'
@@ -26,7 +25,7 @@ function App() {
                 fontWeight: isActive ? 600 : 400,
               })}
             >
-              Search
+              Find
             </NavLink>
             <NavLink
               to="/new-rating"
@@ -36,7 +35,7 @@ function App() {
                 fontWeight: isActive ? 600 : 400,
               })}
             >
-              New Rating
+              Rate
             </NavLink>
             {isAdmin() && (
               <NavLink
@@ -50,16 +49,6 @@ function App() {
                 Merge duplicates
               </NavLink>
             )}
-            <NavLink
-              to="/reviews"
-              style={({ isActive }) => ({
-                color: isActive ? '#c00' : '#666',
-                textDecoration: 'none',
-                fontWeight: isActive ? 600 : 400,
-              })}
-            >
-              Reviews
-            </NavLink>
           </nav>
         </header>
         <main>
@@ -69,7 +58,6 @@ function App() {
             <Route path="/new-rating" element={<NewRatingPage />} />
             <Route path="/matt" element={<UnlockAdminPage />} />
             <Route path="/duplicates" element={<DuplicatesPage />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/reviews/:id" element={<ReviewDetailPage />} />
           </Routes>
         </main>

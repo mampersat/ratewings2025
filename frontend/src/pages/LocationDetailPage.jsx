@@ -34,7 +34,13 @@ export default function LocationDetailPage() {
       .then(([locData, reviewsData]) => {
         if (!cancelled) {
           setLocation(locData)
-          setReviews(Array.isArray(reviewsData) ? reviewsData : [])
+          const list = Array.isArray(reviewsData) ? reviewsData : []
+          list.sort((a, b) => {
+            const ta = a.created_at ? new Date(a.created_at).getTime() : 0
+            const tb = b.created_at ? new Date(b.created_at).getTime() : 0
+            return tb - ta
+          })
+          setReviews(list)
         }
       })
       .catch((err) => {
@@ -51,7 +57,7 @@ export default function LocationDetailPage() {
     return (
       <div style={{ maxWidth: 700, margin: 'auto', padding: 20, textAlign: 'left' }}>
         <p>{error}</p>
-        <Link to="/">← Search</Link>
+        <Link to="/">← Find</Link>
       </div>
     )
   }
@@ -59,7 +65,7 @@ export default function LocationDetailPage() {
   return (
     <div style={{ maxWidth: 700, margin: 'auto', padding: 20, textAlign: 'left' }}>
       <p style={{ marginBottom: '1rem' }}>
-        <Link to="/">← Search</Link>
+        <Link to="/">← Find</Link>
       </p>
       <article data-surface="light" style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem', marginBottom: '1.5rem', background: '#fff' }}>
         <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>{location.name}</h2>

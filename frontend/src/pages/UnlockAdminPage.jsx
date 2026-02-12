@@ -34,7 +34,7 @@ export default function UnlockAdminPage() {
       <div style={{ maxWidth: 400, margin: 'auto', padding: 40, textAlign: 'center' }}>
         <p>{message}</p>
         <p style={{ marginTop: '1rem' }}>
-          <Link to="/">← Search</Link>
+          <Link to="/">← Find</Link>
         </p>
       </div>
     )

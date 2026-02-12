@@ -96,7 +96,7 @@ export default function NewRatingPage() {
 
   return (
     <div style={{ maxWidth: 560, margin: 'auto', padding: 20, textAlign: 'left' }}>
-      <h2 style={{ fontSize: '1.25rem', marginBottom: 16 }}>New Rating</h2>
+      <h2 style={{ fontSize: '1.25rem', marginBottom: 16 }}>Rate</h2>
       <p style={{ color: '#666', marginBottom: '1.25rem' }}>
         Rate a wing location. Choose an existing location or add a new one, then add your rating.
       </p>

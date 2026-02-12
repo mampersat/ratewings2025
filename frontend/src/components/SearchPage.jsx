@@ -54,7 +54,7 @@ export default function SearchPage() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [filters, setFilters] = useState({
     minRating: 0,
-    sortBy: 'rating' // 'rating', 'name', 'reviews'
+    sortBy: 'recently_reviewed' // 'recently_reviewed', 'date_created', 'rating', 'name', 'reviews', 'heat', 'nearme'
   });
   const [lat, setLat] = useState(null);
   const [lon, setLon] = useState(null);
@@ -144,7 +144,7 @@ export default function SearchPage() {
     setLocationError(null);
     setMode('city');
     if (filters.sortBy === 'nearme') {
-      handleFilterChange('sortBy', 'rating');
+      handleFilterChange('sortBy', 'recently_reviewed');
     }
   };
 
@@ -175,7 +175,7 @@ export default function SearchPage() {
   return (
     <div className="search-page">
       <div className="search-header">
-        <h2 className="search-title">Search by location name or find near you</h2>
+        <h2 className="search-title">Find by location name or near you</h2>
         <div className="search-bar">
           <input
             type="text"
@@ -215,7 +215,7 @@ export default function SearchPage() {
           {(mode === 'nearby' || filters.sortBy === 'nearme') && lat != null && lon != null ? (
             <>Within 20 miles, then sorted by dropdown below</>
           ) : (
-            <>Search by location name or address, or sort by Near me</>
+            <>Find by location name or address, or sort by Near me</>
           )}
         </div>
       </div>
@@ -241,6 +241,8 @@ export default function SearchPage() {
             value={filters.sortBy}
             onChange={(e) => handleFilterChange('sortBy', e.target.value)}
           >
+            <option value="recently_reviewed">Recently reviewed</option>
+            <option value="date_created">Date created</option>
             <option value="rating">Highest rating</option>
             <option value="name">Name A–Z</option>
             <option value="reviews">Most reviews</option>

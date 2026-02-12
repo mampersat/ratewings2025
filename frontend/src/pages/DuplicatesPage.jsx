@@ -96,7 +96,7 @@ export default function DuplicatesPage() {
         <h2 style={{ marginTop: 0 }}>Admin only</h2>
         <p style={{ color: '#666' }}>Merge locations is only available to admins.</p>
         <p>
-          <Link to="/" style={{ color: '#646cff' }}>← Search</Link>
+          <Link to="/" style={{ color: '#646cff' }}>← Find</Link>
         </p>
       </div>
     )
@@ -207,7 +207,7 @@ export default function DuplicatesPage() {
       )}
 
       <p style={{ marginTop: '1.5rem' }}>
-        <Link to="/" style={{ color: '#646cff' }}>← Search</Link>
+        <Link to="/" style={{ color: '#646cff' }}>← Find</Link>
       </p>
     </div>
   )

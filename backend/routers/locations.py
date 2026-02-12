@@ -34,6 +34,19 @@ def _attach_rating_stats(locations, db: Session):
         loc.review_count = review_count
 
 
+def _attach_last_review_at(locations, db: Session):
+    """Attach last_review_at (max created_at) to each location for sorting."""
+    if not locations:
+        return
+    rows = db.query(
+        models.WingReview.location_id,
+        func.max(models.WingReview.created_at).label("last_review_at"),
+    ).group_by(models.WingReview.location_id).all()
+    last_at = {loc_id: last for loc_id, last in rows}
+    for loc in locations:
+        loc.last_review_at = last_at.get(loc.id)
+
+
 @router.get("/by-id/{location_id}", response_model=schemas.WingLocation)
 def read_location(location_id: int, db: Session = Depends(get_db)):
     """Get a single location by ID. Declared before list so path is matched first."""
@@ -54,7 +67,7 @@ def read_locations(
     lon: float = Query(None, description="Longitude for distance search"),
     max_distance: float = Query(20, description="Max distance in miles when lat/lon provided"),
     min_rating: float = Query(None, description="Minimum average rating (0-10)"),
-    sort_by: str = Query(None, description="Sort: rating, name, reviews, heat"),
+    sort_by: str = Query(None, description="Sort: rating, name, reviews, heat, date_created, recently_reviewed"),
     db: Session = Depends(get_db)
 ):
     query = db.query(models.WingLocation)
@@ -103,18 +116,41 @@ def read_locations(
             loc.distance = d
             locations.append(loc)
         _attach_rating_stats(locations, db)
-        # Apply sort_by then limit
-        if sort_by == "rating":
+        if sort_by == "recently_reviewed":
+            _attach_last_review_at(locations, db)
+            locations.sort(
+                key=lambda loc: (
+                    loc.last_review_at is None,
+                    -(loc.last_review_at.timestamp() if loc.last_review_at else 0),
+                    (loc.name or "").lower(),
+                )
+            )
+        elif sort_by == "rating":
             locations.sort(key=lambda loc: (-(loc.average_rating or 0), loc.name or ""))
         elif sort_by == "heat":
             locations.sort(key=lambda loc: (-(loc.average_heat or 0), loc.name or ""))
         elif sort_by == "reviews":
             locations.sort(key=lambda loc: (-(loc.review_count or 0), loc.name or ""))
+        elif sort_by == "date_created":
+            locations.sort(key=lambda loc: (-loc.id, loc.name or ""))
         else:
             locations.sort(key=lambda loc: (loc.name or "").lower())
         return locations[skip : skip + limit]
 
-    if sort_by == "rating":
+    if sort_by == "recently_reviewed":
+        last_review_subq = (
+            db.query(
+                models.WingReview.location_id,
+                func.max(models.WingReview.created_at).label("last_review_at"),
+            )
+            .group_by(models.WingReview.location_id)
+            .subquery()
+        )
+        query = query.outerjoin(last_review_subq, models.WingLocation.id == last_review_subq.c.location_id)
+        query = query.order_by(last_review_subq.c.last_review_at.desc().nullslast(), models.WingLocation.name)
+    elif sort_by == "date_created":
+        query = query.order_by(models.WingLocation.id.desc())
+    elif sort_by == "rating":
         stats = (
             db.query(
                 models.WingReview.location_id,
@@ -154,6 +190,7 @@ def read_locations(
         query = query.outerjoin(stats, models.WingLocation.id == stats.c.location_id)
         query = query.order_by(stats.c.review_count.desc().nullslast(), models.WingLocation.name)
     else:
+        # default (e.g. name or unrecognized): by name
         query = query.order_by(models.WingLocation.name)
 
     locations = query.offset(skip).limit(limit).all()

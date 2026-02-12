@@ -100,7 +100,7 @@ export default function ReviewDetailPage() {
     return (
       <div style={{ maxWidth: 600, margin: 'auto', padding: 20, textAlign: 'left' }}>
         <p>{error}</p>
-        <Link to="/reviews">Back to reviews</Link>
+        <Link to="/">← Find</Link>
       </div>
     )
   }
@@ -108,7 +108,7 @@ export default function ReviewDetailPage() {
   return (
     <div style={{ maxWidth: 600, margin: 'auto', padding: 20, textAlign: 'left' }}>
       <p style={{ marginBottom: '1rem' }}>
-        <Link to="/reviews" style={{ color: '#646cff' }}>← Back to reviews</Link>
+        <Link to="/" style={{ color: '#646cff' }}>← Find</Link>
       </p>
       <article data-surface="light" style={{ border: '1px solid #eee', borderRadius: 8, padding: '1.5rem', background: '#fff' }}>
         <h2 style={{ marginTop: 0, fontSize: '1.25rem' }}>Review #{review.id}</h2>
