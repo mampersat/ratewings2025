@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 const API_BASE = 'http://localhost:8000'
 
+const RATING_OPTIONS = [1, 2, 4, 5, 6, 7, 8, 9, 10] // 1–10, skip 3
+
 export default function NewRatingPage() {
+  const [searchParams] = useSearchParams()
+  const locationIdFromUrl = searchParams.get('location_id')
   const [locations, setLocations] = useState([])
   const [useExisting, setUseExisting] = useState(true)
   const [locationId, setLocationId] = useState('')
@@ -21,6 +25,13 @@ export default function NewRatingPage() {
       .then(setLocations)
       .catch(() => setLocations([]))
   }, [])
+
+  useEffect(() => {
+    if (locationIdFromUrl) {
+      setLocationId(locationIdFromUrl)
+      setUseExisting(true)
+    }
+  }, [locationIdFromUrl])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -175,32 +186,33 @@ export default function NewRatingPage() {
         )}
 
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="rating" style={{ display: 'block', marginBottom: 4 }}>Rating (0–10)</label>
-          <input
+          <label htmlFor="rating" style={{ display: 'block', marginBottom: 4 }}>Rating</label>
+          <select
             id="rating"
-            type="number"
-            min={0}
-            max={10}
-            step={0.1}
             value={rating}
             required
             onChange={(e) => setRating(e.target.value)}
             style={{ width: '100%', padding: 8 }}
-          />
+          >
+            <option value="">Select…</option>
+            {RATING_OPTIONS.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="heat" style={{ display: 'block', marginBottom: 4 }}>Heat (0–10, optional)</label>
-          <input
+          <label htmlFor="heat" style={{ display: 'block', marginBottom: 4 }}>Heat (optional)</label>
+          <select
             id="heat"
-            type="number"
-            min={0}
-            max={10}
-            step={1}
             value={heat}
             onChange={(e) => setHeat(e.target.value)}
-            placeholder=""
-            style={{ width: '100%', padding: 8, marginBottom: '1rem' }}
-          />
+            style={{ width: '100%', padding: 8 }}
+          >
+            <option value="">—</option>
+            {RATING_OPTIONS.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
         <div style={{ marginBottom: '1rem' }}>
           <label htmlFor="comment" style={{ display: 'block', marginBottom: 4 }}>Comment (optional)</label>

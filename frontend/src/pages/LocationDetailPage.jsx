@@ -80,6 +80,9 @@ export default function LocationDetailPage() {
             <> ({location.review_count} review{location.review_count !== 1 ? 's' : ''})</>
           )}
         </p>
+        <p style={{ margin: '0.75rem 0 0' }}>
+          <Link to={`/new-rating?location_id=${location.id}`} style={{ color: '#646cff' }}>Add rating</Link>
+        </p>
       </article>
 
       <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Reviews</h3>

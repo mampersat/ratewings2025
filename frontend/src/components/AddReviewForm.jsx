@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+const RATING_OPTIONS = [1, 2, 4, 5, 6, 7, 8, 9, 10]; // 1–10, skip 3
+
 export default function AddReviewForm({ onAdd, refresh }) {
   const [locationId, setLocationId] = useState("");
   const [rating, setRating] = useState("");
@@ -51,25 +53,25 @@ export default function AddReviewForm({ onAdd, refresh }) {
           </option>
         ))}
       </select>
-      <input
-        type="number"
-        placeholder="Rating (0-10)"
+      <select
         value={rating}
-        min={0}
-        max={10}
-        step={0.1}
         required
         onChange={(e) => setRating(e.target.value)}
-      />
-      <input
-        type="number"
-        placeholder="Heat (0-10, optional)"
+      >
+        <option value="">Rating…</option>
+        {RATING_OPTIONS.map((n) => (
+          <option key={n} value={n}>{n}</option>
+        ))}
+      </select>
+      <select
         value={heat}
-        min={0}
-        max={10}
-        step={1}
         onChange={(e) => setHeat(e.target.value)}
-      />
+      >
+        <option value="">Heat (optional)</option>
+        {RATING_OPTIONS.map((n) => (
+          <option key={n} value={n}>{n}</option>
+        ))}
+      </select>
       <input
         placeholder="Comment"
         value={comment}

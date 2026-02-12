@@ -3,6 +3,51 @@ import { Link, useNavigate } from 'react-router-dom';
 import { isAdmin } from '../utils/admin';
 import './SearchPage.css';
 
+const iconColor = '#3d2914';
+const RatingIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
+    <path d="M12 2l3 6.5 6.5.5-5 4.5 2 6.5L12 17l-4.5 3 2-6.5-5-4.5 6.5-.5L12 2z" />
+  </svg>
+);
+const FlameIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
+    <path d="M12 22c4.97 0 9-3.58 9-8 0-4.5-2.5-6.5-4-8-1.5 1.5-2 4-3 6-.75 1.5-2 3-3 3s-2-.5-2-2c0-2 1-4 2-6-2 0-4 2-5 4-1 2-1 4 0 6 1 2 2 3 3 3z" />
+  </svg>
+);
+const WalkingIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
+    <path d="M12 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm-2 4h1l2 4-2 2v8h-2v-6l-2-2 1-4h2z" />
+  </svg>
+);
+const AirplaneIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
+    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+  </svg>
+);
+const RocketIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
+    <path d="M12 2L9 6H4v2h2l2 8H8l1 4h6l1-4h-1l2-8h2V6h-5l-3-4zm0 4.5l1.5 2h-3L12 6.5zM9 8h6l-1.5 6h-3L9 8z" />
+  </svg>
+);
+
+function getDistanceIcon(miles) {
+  if (miles == null) return null;
+  const m = Number(miles);
+  if (m < 5) return <WalkingIcon />;
+  if (m < 1000) return <AirplaneIcon />;
+  return <RocketIcon />;
+}
+function formatStatRating(v) {
+  if (v == null) return '—';
+  const n = Number(v);
+  return n % 1 === 0 ? Math.round(n) : n.toFixed(1);
+}
+function formatDistance(miles) {
+  if (miles == null) return null;
+  const m = Number(miles);
+  return m < 1 ? `${m.toFixed(1)} mi` : `${Math.round(m)} mi`;
+}
+
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locations, setLocations] = useState([]);
@@ -231,30 +276,30 @@ export default function SearchPage() {
                 <Link to={`/locations/${location.id}`}>{location.name}</Link>
               </h3>
               <p>{location.address}</p>
-              <div className="location-rating-box">
-                {location.average_rating != null && location.review_count > 0 ? (
-                  <>
-                    <span className="location-rating-value">
-                      Rating {Number(location.average_rating) % 1 === 0 ? Math.round(Number(location.average_rating)) : Number(location.average_rating).toFixed(1)}
-                      <span className="rating-out-of">/10</span>
-                    </span>
-                    {location.average_heat != null && (
-                      <span className="location-rating-value">
-                        Heat {Number(location.average_heat) % 1 === 0 ? Math.round(Number(location.average_heat)) : Number(location.average_heat).toFixed(1)}
-                        <span className="rating-out-of">/10</span>
-                      </span>
-                    )}
-                    <span className="location-rating-meta">
-                      {location.review_count} review{location.review_count !== 1 ? 's' : ''}
-                    </span>
-                  </>
-                ) : (
-                  <span className="location-rating-none">No ratings yet</span>
+              <div className="location-stats-pills">
+                <span className="stat-pill stat-pill-rating" title="Rating">
+                  <RatingIcon />
+                  <span>{location.average_rating != null && location.review_count > 0 ? formatStatRating(location.average_rating) : '—'}</span>
+                </span>
+                <span className="stat-pill stat-pill-heat" title="Heat">
+                  <FlameIcon />
+                  <span>{location.average_heat != null ? formatStatRating(location.average_heat) : '—'}</span>
+                </span>
+                {location.distance != null && (
+                  <span className="stat-pill stat-pill-distance" title="Distance">
+                    {getDistanceIcon(location.distance)}
+                    <span>{formatDistance(location.distance)}</span>
+                  </span>
                 )}
               </div>
-              {location.distance !== undefined && location.distance !== null && (
-                <p><strong>Distance:</strong> {location.distance.toFixed(2)} miles</p>
+              {location.review_count != null && location.review_count > 0 && (
+                <p className="location-review-meta">{location.review_count} review{location.review_count !== 1 ? 's' : ''}</p>
               )}
+              <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
+                <Link to={`/new-rating?location_id=${location.id}`} onClick={(e) => e.stopPropagation()} style={{ color: '#646cff' }}>
+                  Add rating
+                </Link>
+              </p>
             </div>
           </div>
         ) : (
@@ -267,30 +312,30 @@ export default function SearchPage() {
           >
             <h3>{location.name}</h3>
             <p>{location.address}</p>
-            <div className="location-rating-box">
-              {location.average_rating != null && location.review_count > 0 ? (
-                <>
-                  <span className="location-rating-value">
-                    Rating {Number(location.average_rating) % 1 === 0 ? Math.round(Number(location.average_rating)) : Number(location.average_rating).toFixed(1)}
-                    <span className="rating-out-of">/10</span>
-                  </span>
-                  {location.average_heat != null && (
-                    <span className="location-rating-value">
-                      Heat {Number(location.average_heat) % 1 === 0 ? Math.round(Number(location.average_heat)) : Number(location.average_heat).toFixed(1)}
-                      <span className="rating-out-of">/10</span>
-                    </span>
-                  )}
-                  <span className="location-rating-meta">
-                    {location.review_count} review{location.review_count !== 1 ? 's' : ''}
-                  </span>
-                </>
-              ) : (
-                <span className="location-rating-none">No ratings yet</span>
+            <div className="location-stats-pills">
+              <span className="stat-pill stat-pill-rating" title="Rating">
+                <RatingIcon />
+                <span>{location.average_rating != null && location.review_count > 0 ? formatStatRating(location.average_rating) : '—'}</span>
+              </span>
+              <span className="stat-pill stat-pill-heat" title="Heat">
+                <FlameIcon />
+                <span>{location.average_heat != null ? formatStatRating(location.average_heat) : '—'}</span>
+              </span>
+              {location.distance != null && (
+                <span className="stat-pill stat-pill-distance" title="Distance">
+                  {getDistanceIcon(location.distance)}
+                  <span>{formatDistance(location.distance)}</span>
+                </span>
               )}
             </div>
-            {location.distance !== undefined && location.distance !== null && (
-              <p><strong>Distance:</strong> {location.distance.toFixed(2)} miles</p>
+            {location.review_count != null && location.review_count > 0 && (
+              <p className="location-review-meta">{location.review_count} review{location.review_count !== 1 ? 's' : ''}</p>
             )}
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
+              <Link to={`/new-rating?location_id=${location.id}`} onClick={(e) => e.stopPropagation()} style={{ color: '#646cff' }}>
+                Add rating
+              </Link>
+            </p>
           </Link>
         ))}
       </div>

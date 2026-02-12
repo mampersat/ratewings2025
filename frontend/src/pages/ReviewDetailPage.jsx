@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 
 const API_BASE = 'http://localhost:8000'
 
+const RATING_OPTIONS = [1, 2, 4, 5, 6, 7, 8, 9, 10] // 1–10, skip 3
+
 export default function ReviewDetailPage() {
   const { id } = useParams()
   const [review, setReview] = useState(null)
@@ -153,31 +155,33 @@ export default function ReviewDetailPage() {
               </select>
             </div>
             <div style={{ marginBottom: '0.75rem' }}>
-              <label htmlFor="edit-rating" style={{ display: 'block', marginBottom: 4 }}>Rating (0–10)</label>
-              <input
+              <label htmlFor="edit-rating" style={{ display: 'block', marginBottom: 4 }}>Rating</label>
+              <select
                 id="edit-rating"
-                type="number"
-                min={0}
-                max={10}
-                step={0.1}
                 value={editRating}
                 required
                 onChange={(e) => setEditRating(e.target.value)}
                 style={{ width: '100%', padding: 6 }}
-              />
+              >
+                <option value="">Select…</option>
+                {RATING_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
             </div>
             <div style={{ marginBottom: '0.75rem' }}>
-              <label htmlFor="edit-heat" style={{ display: 'block', marginBottom: 4 }}>Heat (0–10, optional)</label>
-              <input
+              <label htmlFor="edit-heat" style={{ display: 'block', marginBottom: 4 }}>Heat (optional)</label>
+              <select
                 id="edit-heat"
-                type="number"
-                min={0}
-                max={10}
-                step={1}
                 value={editHeat}
                 onChange={(e) => setEditHeat(e.target.value)}
                 style={{ width: '100%', padding: 6 }}
-              />
+              >
+                <option value="">—</option>
+                {RATING_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
             </div>
             <div style={{ marginBottom: '0.75rem' }}>
               <label htmlFor="edit-comment" style={{ display: 'block', marginBottom: 4 }}>Comment</label>
