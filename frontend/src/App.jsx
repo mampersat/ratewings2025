@@ -14,7 +14,7 @@ function App() {
     <BrowserRouter>
       <div>
         <header style={{ textAlign: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
-          <h1 style={{ margin: 0, fontSize: '1.75rem' }}>Chicken Wing Rating App</h1>
+          <h1 style={{ margin: 0, fontSize: '1.75rem' }}>Rate Wings</h1>
           <p style={{ margin: '0.25rem 0 0', color: '#666', fontSize: '0.95rem' }}>Find the best wings near you</p>
           <nav style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
             <NavLink
