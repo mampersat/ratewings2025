@@ -1,14 +1,18 @@
-version: "3.9"
 services:
   backend:
     build: ./backend
     ports:
       - "8000:8000"
+    environment:
+      - DB_PATH=/data/wings.db
     volumes:
-      - ./backend/wings.db:/app/wings.db  # Persist DB for SQLite
+      - dbdata:/data
   frontend:
     build: ./frontend
     ports:
       - "80:80"
     depends_on:
-      - backend 
+      - backend
+
+volumes:
+  dbdata: 
