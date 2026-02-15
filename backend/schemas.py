@@ -48,7 +48,9 @@ class WingReviewBase(BaseModel):
     heat: Optional[int] = None  # 0-10
 
 class WingReviewCreate(WingReviewBase):
-    location_id: int
+    location_id: Optional[int] = None  # omit to use Unassigned (curator sets later)
+    lat: Optional[float] = None
+    lon: Optional[float] = None
 
 
 class WingReviewUpdate(BaseModel):
@@ -56,12 +58,16 @@ class WingReviewUpdate(BaseModel):
     rating: Optional[float] = None
     comment: Optional[str] = None
     heat: Optional[int] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
 
 
 class WingReview(WingReviewBase):
     id: int
     location_id: int
     created_at: Optional[datetime] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
     class Config:
         orm_mode = True
 

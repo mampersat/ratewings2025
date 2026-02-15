@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-
-const API_BASE = 'http://localhost:8000'
+import { API_BASE } from '../api'
 
 const RATING_OPTIONS = [1, 2, 4, 5, 6, 7, 8, 9, 10] // 1–10, skip 3
 
@@ -126,6 +125,11 @@ export default function ReviewDetailPage() {
                 <strong>Location:</strong>{' '}
                 {review.location_name ?? `ID ${review.location_id}`}
                 {review.location_address && ` — ${review.location_address}`}
+              </p>
+            )}
+            {review.lat != null && review.lon != null && (
+              <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: '#666' }}>
+                Recorded coords: {Number(review.lat).toFixed(5)}, {Number(review.lon).toFixed(5)} (curator can set location)
               </p>
             )}
             {review.comment && (

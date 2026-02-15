@@ -20,4 +20,6 @@ class WingReview(Base):
     comment = Column(String)
     heat = Column(Integer, nullable=True)  # 0-10 heat level, backfilled from "heat: N" in comment
     created_at = Column(DateTime, default=datetime.utcnow, nullable=True)
+    lat = Column(Float, nullable=True)  # optional coords when location unassigned (curator can set later)
+    lon = Column(Float, nullable=True)
     location = relationship("WingLocation", back_populates="reviews") 

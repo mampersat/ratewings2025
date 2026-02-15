@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE } from '../api';
 
 export default function AddLocationForm({ onAdd }) {
   const [name, setName] = useState("");
@@ -6,7 +7,7 @@ export default function AddLocationForm({ onAdd }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("http://localhost:8000/locations/", {
+    const res = await fetch(`${API_BASE}/locations/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, address }),

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { isAdmin } from '../utils/admin'
-
-const API_BASE = 'http://localhost:8000'
+import { API_BASE } from '../api'
 
 export default function DuplicatesPage() {
   const [searchParams] = useSearchParams()

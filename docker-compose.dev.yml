@@ -21,5 +21,7 @@ services:
       - /app/node_modules   # use container node_modules, not host
     environment:
       - NODE_ENV=development
+      # Vite proxy will forward /api to backend (so browser uses same origin, no CORS/port issues)
+      - API_PROXY_TARGET=http://backend:8000
     depends_on:
       - backend

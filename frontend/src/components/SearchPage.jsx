@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { isAdmin } from '../utils/admin';
+import { API_BASE } from '../api';
 import './SearchPage.css';
 
 const iconColor = '#3d2914';
@@ -19,14 +20,14 @@ const WalkingIcon = () => (
     <path d="M12 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm-2 4h1l2 4-2 2v8h-2v-6l-2-2 1-4h2z" />
   </svg>
 );
+const CarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
+    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+  </svg>
+);
 const AirplaneIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
     <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-  </svg>
-);
-const RocketIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill={iconColor} aria-hidden>
-    <path d="M12 2L9 6H4v2h2l2 8H8l1 4h6l1-4h-1l2-8h2V6h-5l-3-4zm0 4.5l1.5 2h-3L12 6.5zM9 8h6l-1.5 6h-3L9 8z" />
   </svg>
 );
 
@@ -34,8 +35,8 @@ function getDistanceIcon(miles) {
   if (miles == null) return null;
   const m = Number(miles);
   if (m < 5) return <WalkingIcon />;
-  if (m < 1000) return <AirplaneIcon />;
-  return <RocketIcon />;
+  if (m < 1000) return <CarIcon />;
+  return <AirplaneIcon />;
 }
 function formatStatRating(v) {
   if (v == null) return '—';
@@ -51,6 +52,7 @@ function formatDistance(miles) {
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [locations, setLocations] = useState([]);
+  const [fetchError, setFetchError] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [filters, setFilters] = useState({
     minRating: 0,
@@ -120,12 +122,28 @@ export default function SearchPage() {
         params.set('sort_by', filters.sortBy);
       }
       params.set('limit', '100');
-      const url = `http://localhost:8000/locations/?${params.toString()}`;
+      const url = `${API_BASE}/locations/?${params.toString()}`;
       const response = await fetch(url);
+      if (!response.ok) {
+        const text = await response.text();
+        let msg = `Backend error ${response.status}`;
+        try {
+          const j = JSON.parse(text);
+          if (j.detail) msg = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail);
+        } catch (_) {
+          if (text.length < 100) msg = text;
+        }
+        setFetchError(msg);
+        setLocations([]);
+        return;
+      }
       const data = await response.json();
-      setLocations(data);
+      setFetchError(null);
+      setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching locations:', error);
+      setFetchError(error?.message || `Could not load locations. Is the backend running at ${API_BASE}?`);
+      setLocations([]);
     }
   };
 
@@ -257,6 +275,16 @@ export default function SearchPage() {
           <button type="button" onClick={mergeSelected} className="merge-selected-btn">
             Merge selected ({selectedIds.size}) →
           </button>
+        </div>
+      )}
+      {fetchError && (
+        <div style={{ padding: 12, marginBottom: 16, borderRadius: 8, background: '#fee', color: '#c00' }}>
+          <p style={{ margin: 0 }}><strong>Could not load locations.</strong> {fetchError}</p>
+          <p style={{ margin: '8px 0 0', fontSize: '0.9rem' }}>
+            Make sure the backend is running (e.g. <code style={{ background: '#fff', padding: '2px 6px' }}>cd backend && uvicorn main:app --reload</code>).
+            If you added review location features, run: <code style={{ background: '#fff', padding: '2px 6px' }}>python3 add_review_lat_lon.py</code> from the backend folder.
+          </p>
+          <button type="button" onClick={() => { setFetchError(null); fetchLocations(); }} style={{ marginTop: 10, padding: '6px 12px' }}>Retry</button>
         </div>
       )}
       <div className="results-section">

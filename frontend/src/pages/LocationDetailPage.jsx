@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-
-const API_BASE = 'http://localhost:8000'
+import { API_BASE } from '../api'
 
 function formatReviewDate(isoString) {
   if (!isoString) return '—'
@@ -19,21 +18,38 @@ export default function LocationDetailPage() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [reviewsError, setReviewsError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
-    Promise.all([
-      fetch(`${API_BASE}/locations/by-id/${id}`).then((res) => {
+    setReviewsError(null)
+    fetch(`${API_BASE}/locations/by-id/${id}`)
+      .then((res) => {
         if (!res.ok) throw new Error(res.status === 404 ? 'Location not found' : 'Failed to load location')
         return res.json()
-      }),
-      fetch(`${API_BASE}/reviews/?location_id=${id}&limit=500`).then((res) => res.json()),
-    ])
-      .then(([locData, reviewsData]) => {
+      })
+      .then((locData) => {
+        if (!cancelled) setLocation(locData)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    fetch(`${API_BASE}/reviews/?location_id=${id}&limit=500`)
+      .then((res) => {
+        if (!res.ok) {
+          return res.text().then((t) => {
+            throw new Error(t?.slice(0, 80) || `Reviews error ${res.status}`)
+          })
+        }
+        return res.json()
+      })
+      .then((reviewsData) => {
         if (!cancelled) {
-          setLocation(locData)
           const list = Array.isArray(reviewsData) ? reviewsData : []
           list.sort((a, b) => {
             const ta = a.created_at ? new Date(a.created_at).getTime() : 0
@@ -44,10 +60,7 @@ export default function LocationDetailPage() {
         }
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setReviewsError(err?.message || 'Could not load reviews')
       })
     return () => { cancelled = true }
   }, [id])
@@ -92,7 +105,14 @@ export default function LocationDetailPage() {
       </article>
 
       <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Reviews</h3>
-      {reviews.length === 0 ? (
+      {reviewsError ? (
+        <div style={{ padding: 12, background: '#fee', color: '#c00', borderRadius: 8, marginBottom: 8 }}>
+          <p style={{ margin: 0 }}>{reviewsError}</p>
+          <p style={{ margin: '8px 0 0', fontSize: '0.9rem' }}>
+            If you see this after adding review location features, run: <code style={{ background: '#fff', padding: '2px 6px' }}>cd backend && python3 add_review_lat_lon.py</code>
+          </p>
+        </div>
+      ) : reviews.length === 0 ? (
         <p style={{ color: '#666' }}>No reviews yet for this location.</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>

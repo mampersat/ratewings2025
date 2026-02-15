@@ -36,6 +36,8 @@ def read_reviews(
             "comment": r.comment,
             "heat": getattr(r, "heat", None),
             "created_at": getattr(r, "created_at", None),
+            "lat": getattr(r, "lat", None),
+            "lon": getattr(r, "lon", None),
             "location_name": loc_map.get(r.location_id, {}).get("name"),
             "location_address": loc_map.get(r.location_id, {}).get("address"),
         }
@@ -55,6 +57,8 @@ def read_review(review_id: int, db: Session = Depends(get_db)):
         "comment": review.comment,
         "heat": getattr(review, "heat", None),
         "created_at": getattr(review, "created_at", None),
+        "lat": getattr(review, "lat", None),
+        "lon": getattr(review, "lon", None),
         "location_name": location.name if location else None,
         "location_address": location.address if location else None,
     }
@@ -76,14 +80,34 @@ def update_review(review_id: int, update: schemas.WingReviewUpdate, db: Session 
     return review
 
 
+def _get_or_create_unassigned_location(db: Session) -> models.WingLocation:
+    """Get or create the single 'Unassigned' location for reviews without a known place."""
+    loc = db.query(models.WingLocation).filter(models.WingLocation.name == "Unassigned").first()
+    if loc:
+        return loc
+    loc = models.WingLocation(
+        name="Unassigned",
+        address="To be placed by curator",
+    )
+    db.add(loc)
+    db.commit()
+    db.refresh(loc)
+    return loc
+
+
 @router.post("/", response_model=schemas.WingReview)
 def create_review(review: schemas.WingReviewCreate, db: Session = Depends(get_db)):
-    # Ensure location exists
-    location = db.query(models.WingLocation).filter(models.WingLocation.id == review.location_id).first()
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    db_review = models.WingReview(**review.dict())
+    data = review.dict()
+    location_id = data.get("location_id")
+    if location_id is not None:
+        location = db.query(models.WingLocation).filter(models.WingLocation.id == location_id).first()
+        if not location:
+            raise HTTPException(status_code=404, detail="Location not found")
+    else:
+        location = _get_or_create_unassigned_location(db)
+        data["location_id"] = location.id
+    db_review = models.WingReview(**data)
     db.add(db_review)
     db.commit()
     db.refresh(db_review)
-    return db_review 
+    return db_review
